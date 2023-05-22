@@ -27,7 +27,7 @@ if __name__=='__main__':
                         metavar='FILE', type=str, required=True)
     parser.add_argument('-p', '--phen', help='corresponding phenotype file', 
                         metavar='FILE', type=str, required=True)
-    parser.add_argument('--maf', help='optional threshold for filtering out SNPs with MAF below this threshold'
+    parser.add_argument('--maf', help='optional threshold for filtering out SNPs with MAF below this threshold',
                         type=float, required=False)
     parser.add_argument('-o', '--out', help='optional file to output GWAS graph results; default file name is graph.png if not specified',
                         metavar='FILE', type=str, required=False)
