@@ -12,6 +12,8 @@ def read_vcf(path, file_format):
         with gzip.open(path, 'rt') as f:
             for l in f:
                 if (not l.startswith('##')):
+                    #line = l.split('\t')
+                    #print(line)
                     lines.append(l)
         # read the info from vcf file into a pandas dataframe
         # by using read_csv
@@ -35,13 +37,35 @@ def read_vcf(path, file_format):
             sep='\t'
         ).rename(columns={'#CHROM': 'CHROM'})
 
-# this is used to test vcf file by lab 3 file
-def testReadVCF():
-    path = "lab3_gwas.vcf.gz"
-    vcf_df = read_vcf(path, 'gzip')
-    vcf_df.to_csv('out_vcf.csv')
+# this function will read in path of vcf file and covert it 
+# to a df with genotype info, stored as final.csv
+def genoDf(path):
+    if ('gz' in path):
+        vcf_df = read_vcf(path, 'gzip')
+    else:
+        vcf_df = read_vcf(path, 'vcf')
+    
+    ref_allele = vcf_df['REF']
+    alt_allele = vcf_df['ALT']
+    
+    size = vcf_df.shape[0]
+    # get sample names
+    column_name = vcf_df.columns
+    # base on vcf format, extract 12th column till the end for sample names
+    sample_name = column_name[10:]
+
+    for sample in sample_name: 
+        genotype_list = []
+        sample_allele = vcf_df[sample]
+        for i in range(size):
+            genotype_list.append(assignGenoType(ref_allele[i], alt_allele[i], sample_allele[i]))
+        vcf_df[sample] = genotype_list
+    print(vcf_df)
+    vcf_df.to_csv('final_vcf.csv', index=False)
+
 
 # alt can be multiple separated by ','
+# this will assign genotype to sample based on query 
 def assignGenoType(ref, alt, query):
     query = query.split('|')
     alt = alt.split(',')
@@ -60,9 +84,21 @@ def assignGenoType(ref, alt, query):
     
     return genotype
 
+#genoDf('lab3_gwas.vcf.gz')
 
+
+
+#********************** Unit Testing for function *****************************#
+# this is used to test vcf file by lab 3 file
+def testReadVCF():
+    path = "lab3_gwas.vcf.gz"
+    vcf_df = read_vcf(path, 'gzip')
+    vcf_df.to_csv('out_vcf.csv')
+
+# test code for assigning genotype 
 def testGenotype():
     vcf_df = pd.read_csv('out_vcf.csv')
+
     ref_allele = vcf_df['REF']
     alt_allele = vcf_df['ALT']
     
@@ -81,4 +117,23 @@ def testGenotype():
     print(vcf_df)
     vcf_df.to_csv('final_vcf.csv')
 
-testGenotype()
+
+#***********TODO: increase efficiency by line-by line analysis ****************#
+def assignGenoType2(ref, alt, queries):
+    genotypes = []
+    alt = alt.split(',')
+    dictionary = {
+        "0" : ref
+    }
+    index = 1
+    for alternative in alt:
+        dictionary[str(index)] = alternative
+        index+=1
+    for query in queries: 
+        genotype = ''
+        for num in query:
+            if num in dictionary.keys():
+                genotype += dictionary[num]
+        genotypes.append(genotype)
+    
+    return genotypes
