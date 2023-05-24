@@ -5,12 +5,16 @@ import matplotlib.pyplot as plt
 import os.path
 import pandas as pd
 import sys
+import readvcf
 
 def performAnalysis(vcf, phen, graphType=None, graphPath=None):
     if not os.path.isfile(vcf) or not os.path.isfile(phen):
         sys.stderr.write('vcf and phenotype files missing')
         sys.exit(1)
-
+    
+    # generae the genotype df based on vcf file 
+    readvcf.genoDf(vcf)
+    
     # TODO: create plots for specified types
     if graphType == 'qq':
         print()
