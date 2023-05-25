@@ -9,15 +9,16 @@ the associated script through the command-line, like:
 
 ```
 git clone https://github.com/CSE185-GWAS/GWAS.git # clone script to your local computer  
-python ./GWAS.py -vcf <input_file> -phen <phenotype_file> –out <output_file_name> -g <graph_name>
+python GWAS.py --vcf <input_file> --phen <phenotype_file> –o <output_file_name> -g <graph_name> # run the command when you're in the directory of gwas folder you clone 
 ```
-```<input_file>```: input vcf file that contains information about genotype and phenotype for analysis
 
-```<phenotype_file>```: phenotype file
+```--vcf <input_file>``` : used to mark **path to the input vcf file** that contains information about SNP and genotype information of samples
 
-```<output_file_name>```: GWAS output file 
+```--phen <phenotype_file>``` or ```-p <phenotype_file>```: used to mark the **path to the phenotype tsv or csv file**
 
-```<graph_name>```: name of plot we user want. It can be either 'qq' or 'manhattan'
+```--out <output_file_name>``` or ```-o <output_file_name>```: used to mark **name of GWAS output file**
+
+```--graph_type <graph_name>``` or```-g <graph_name>```: used to mark the name of plot user want. It can be either **'qq'** or **'manhattan'**. This is optional tag that user can add to see output graphs. 
 
 
 ### Benchmarking:
