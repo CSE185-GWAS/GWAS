@@ -1,10 +1,34 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-# Caller needed
+import statsmodels.api as sm
+import scipy.stats as stats
+
+#input should be a list of beta values, calculate p value
+def ComputeP(gts, pts, gt_counts):
+    sizeN = sum(gt_counts.values())
+    maf = ComputeMinorAlleleFrequency(gt_counts)
+    
+    # Get null list of beta values
+    gts_null = SimulateGenotypes(maf, sizeN)
+    num_tests = 10000
+    beta_null_dist = []
+    for i in range(num_tests):    
+        pts_null = SimulatePhenotype(gts_null, 0)
+        gwas_beta = LinReg(gts_null, pts_null)
+        beta_null_dist.append(abs(gwas_beta))
+    
+    # Observed beta value
+    gwas_beta = LinReg(gts, pts)
+    pval = one_sample_ttest(gwas_beta, beta_null_dist)
+    return pval
+
+def one_sample_ttest(observed, null_values):
+    # Calculate the t-statistic and p-value
+    p_value = stats.ttest_1samp(observed, null_values.mean())
+    return p_value
 
 def ComputeMinorAlleleFrequency(gt_counts):
-        
         gts = gt_counts.keys()
         print("Genotype frequencies:")
         for gt in gts:
@@ -70,20 +94,16 @@ def SimulatePhenotype(gts, Beta):
     pts = Beta*gts + np.random.normal(0, np.sqrt(1-Beta**2), size=len(gts))
     return pts
 
-def ComputePval(null_dist, obs_value):
-    pval = None
-    # your code here
-    count = 0
-    for i in range(len(null_dist)):
-        if null_dist[i] > obs_value:
-            count += 1
-    pval = count / len(null_dist)
-    return pval
+def LinReg(gts, pts):
+    X = sm.add_constant(gts)
+    model = sm.OLS(pts, X)
+    results = model.fit()
+    beta = results.params[1]
+    return beta
 
+# Not called yet
 def QQPlot(pvals):
-    # Sort the observed p-values
     pvals.sort()
-    # Generate some random data from uniform distribution
     unif = list(np.random.uniform(0, 1, size=len(pvals)))
     unif.sort()
 
