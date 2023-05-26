@@ -46,7 +46,7 @@ memory performance differences between our machines.
 For current progress, after you download the dataset from lab3 and store them in same directory of out script, you can use:
   
 ```
-python GWAS.py --vcf lab3_gwas.vcf.gz --phen testcases/lab3_phen.csv --o out.txt
+python GWAS.py --vcf lab3_gwas.vcf.gz --phen testcases/lab3_phen.csv -o out.txt
 ```
   
 to see the genotype file from vcf and p-value for first SNP.  
