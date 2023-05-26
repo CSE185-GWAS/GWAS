@@ -5,10 +5,9 @@ import gzip
 import io
 import os
 import pandas as pd
-from sklearn.linear_model import LinearRegression
 import numpy as np
 import matplotlib.pyplot as plt
-
+import p_val as pval
 # this will convert list of queries to a genotype list 
 # it will only look at one alt allele
 def convert_to_genoTypes(ref, alt, queries):
@@ -98,44 +97,19 @@ def genoDf(path):
         vcf_df = read_vcf(path, 'vcf')
     
     vcf_df.to_csv('geno_vcf.csv', index=False)
+    print('Geno Dafarame is created')
+    return vcf_df
     
 # uncomment below to test this out using lab3 data
 #genoDf('lab3_gwas.vcf.gz')
 
-# this function will return a dictionary where the keys are the sample IDs 
-# and the values are their corresponding phenotype values
-def createDictFromPhenotype(pheno_file, pheno_col):
-    pheno_df = pd.read_csv(pheno_file)
-    cols_to_drop = []
-    for col in pheno_df.columns:
-        if col != pheno_col:
-            cols_to_drop.append(col)
-    pheno_df.drop(cols_to_drop, axis=1)
-    return dict(pheno_df.values)
 
-# thsi function will return two lists where one will be the genotype values 
-# and the other will be their corresponding phenotype values; used to association testing 
-def generateGenoTypeAndPhenotype(pheno_dict, geno_df):
-    pheno_val = []
-    geno_cols = list(geno_df.columns)
-    for geneIds in geno_cols:
-        if geneIds == 'REF' or geneIds == 'ALT':
-            continue
-        else:
-            pheno_val.append(pheno_dict[geneIds])
-    
-    snps = geno_df.iloc[0]
-    snps = snps.drop(['REF', 'ALT'])
 
-    ref_allele = geno_df['REF'].iloc[0]
-    alt_allele = geno_df['ALT'].iloc[0]
-    genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
 
-    geno_val = []
-    for genotype in snps:
-        geno_val.append(genotype_mapping[genotype])
-    
-    return geno_val, pheno_val
+
+
+
+
 
 #********************** Unit Testing for function *****************************#
 # this is used to read vcf file by lab 3 file
