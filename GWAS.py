@@ -12,7 +12,7 @@ def performAnalysis(vcf, phen, graphType=None, graphPath=None):
         sys.stderr.write('vcf and phenotype files missing')
         sys.exit(1)
     
-    # generae the genotype df based on vcf file 
+    # generate the genotype df based on vcf file 
     readvcf.genoDf(vcf)
     
     # TODO: create plots for specified types
