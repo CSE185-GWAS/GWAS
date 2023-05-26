@@ -1,6 +1,6 @@
 # The GWAS Graph Tool: Performing and Graphing GWAS
 ### Tool Description & Set Up:
-Our GWAS Tool can read in a VCF file, a phenotype file (in csv or tsv), performing genome-wide
+Our GWAS Tool can read in a VCF file, a phenotype file (in csv format), performing genome-wide
 association studies by linear regression and outputting a csv file of GWAS results. Optionally,
 users can pass in arguments to choose the type of plots (e.g. qq plot) would like to generate as
 a .png file. The tool is be implemented in Python and hosted on Github that you can clone the repository and run
@@ -13,7 +13,7 @@ python GWAS.py --vcf <input_file> --phen <phenotype_file> –o <output_file_name
 
 ```--vcf <input_file>``` : used to mark **path to the input vcf file** that contains information about SNP and genotype information of samples
 
-```--phen <phenotype_file>``` or ```-p <phenotype_file>```: used to mark the **path to the phenotype tsv or csv file**
+```--phen <phenotype_file>``` or ```-p <phenotype_file>```: used to mark the **path to the phenotype csv file** The phenotype file should have rows as sample ID and columns as phenotype name (ex. LDL)
 
 ```--out <output_file_name>``` or ```-o <output_file_name>```: used to mark **name of GWAS output file**
 
@@ -46,7 +46,7 @@ memory performance differences between our machines.
 For current progress, after you download the dataset from lab3 and store them in same directory of out script, you can use:
   
 ```
-python GWAS.py --vcf lab3_gwas.vcf.gz --phen lab3_gwas.phen --o out.txt
+python GWAS.py --vcf lab3_gwas.vcf.gz --phen testcases/lab3_phen.csv --o out.txt
 ```
   
 to see the genotype file from vcf and p-value for first SNP.  
