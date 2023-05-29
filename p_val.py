@@ -34,11 +34,12 @@ def generateGenotypeAndPhenotype(pheno_dict, geno_df, snpRow):
         pheno_val.append(pheno_dict[geneIds])
 
     # examine SNP at index of snpRow 
-    snps = geno_df.iloc[snpRow]
+    snps = geno_df.iloc[snpRow][5:]
 
     ref_allele = geno_df['REF'].iloc[snpRow]
     alt_allele = geno_df['ALT'].iloc[snpRow]
     genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
+    print(genotype_mapping)
 
     geno_val = []
     gt_counts = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 0, alt_allele+ref_allele: 0, alt_allele+alt_allele: 0}
@@ -109,6 +110,7 @@ def calculateSingleP(gts, pts, gt_counts):
     
     # Observed beta value
     gwas_beta = LinReg(gts, pts)
+    
     print('Observed beta value is: {}'.format(gwas_beta))
     print("Computing pval by simulated null distribution...")
     print(beta_null_dist)

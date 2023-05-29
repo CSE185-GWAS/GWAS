@@ -10,14 +10,18 @@ import p_val
 
 def performAnalysis(vcf, phen, graphType=None, graphPath=None):
     if not os.path.isfile(vcf) or not os.path.isfile(phen):
-        sys.stderr.write('vcf and phenotype files missing')
+        sys.stderr.write('vcf and phenotype files missing\n')
         sys.exit(1)
     
-    # generate the genotype df based on vcf file 
-    geno_df = readvcf.genoDf(vcf)
-    p_value, beta_values = p_val.calculatePVal(phen, geno_df)
-    print(p_value[:10])
-    print(beta_values[:10])
+    # generate the genotype df based on vcf file if the dataframe is not processed yet 
+    # geno_df = readvcf.genoDf(vcf)
+    geno_df = pd.read_csv(vcf)
+    p_values, beta_values = p_val.calculatePVal(phen, geno_df)
+    out_df = pd.DataFrame({'CHR': geno_df['CHROM'], 'SNP': geno_df['ID'], 'BP': geno_df['POS'], 
+                           'BETA': beta_values, 'P': p_values})
+    out_df.to_csv('out.txt', sep='\t', index=False)
+    # print(f'{p_value[:10]}')
+    # print(f'{beta_values[:10]}')
     
     # TODO: create plots for specified types
     if graphType == 'qq':
