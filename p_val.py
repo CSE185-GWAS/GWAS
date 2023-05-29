@@ -27,13 +27,11 @@ def createDictFromPhenotype(pheno_file, pheno_col=''):
 def generateGenotypeAndPhenotype(pheno_dict, geno_df, snpRow):
     pheno_val = []
     geno_cols = list(geno_df.columns)
+    # start from sample columns
     geno_cols = geno_cols[5:]
 
     for geneIds in geno_cols:
-        if geneIds == 'REF' or geneIds == 'ALT':
-            continue
-        else:
-            pheno_val.append(pheno_dict[geneIds])
+        pheno_val.append(pheno_dict[geneIds])
 
     # examine SNP at index of snpRow 
     snps = geno_df.iloc[snpRow]

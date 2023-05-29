@@ -16,7 +16,8 @@ def performAnalysis(vcf, phen, graphType=None, graphPath=None):
     # generate the genotype df based on vcf file 
     geno_df = readvcf.genoDf(vcf)
     p_value, beta_values = p_val.calculatePVal(phen, geno_df)
-
+    print(p_value[:10])
+    print(beta_values[:10])
     
     # TODO: create plots for specified types
     if graphType == 'qq':
