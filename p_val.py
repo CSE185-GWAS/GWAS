@@ -7,6 +7,7 @@ import statsmodels.api as sm
 import scipy.stats as stats
 import pandas as pd
 from qqman import qqman
+
 from scipy.stats import ttest_1samp
 
 # this function will return a dictionary where the keys are the sample IDs 
@@ -115,7 +116,10 @@ def calculateSingleP(gts, pts, gt_counts):
     print('Observed beta value is: {}'.format(gwas_beta))
     print("Computing pval by simulated null distribution...")
     print(beta_null_dist)
-    t_statistic, p_value = stats.ttest_1samp(gwas_beta, beta_null_dist.mean())
+    results = stats.ttest_1samp(pts, null_pheno.mean(),alternative='two-sided')
+    t_statistic, p_value = results.statistic, results.pvalue
+    print(t_statistic)
+    print(p_value)
     return p_value, gwas_beta, t_statistic
 
 
