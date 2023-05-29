@@ -95,15 +95,16 @@ def generateNullDistribution(maf, N):
 
 
 #input should be a list of beta values, calculate p value
-def caculateSingleP(gts, pts, gt_counts):
-    size = sum(gt_counts.values())
+def caculateSinglePT(gts, pts, gt_counts):
+    sizeN = sum(gt_counts.values())
     maf = generateMAF(gt_counts)
-    
-    # Get null list of beta values
     num_tests = 10000
     beta_null_dist = []
+    
+    # Get null list of beta values
     for i in range(num_tests):    
-        null_geno,null_pheno= generateNullDistribution(maf, size)
+        null_geno,null_pheno= generateNullDistribution(maf, sizeN)
+        gwas_beta = LinReg(null_geno, null_pheno)
         gwas_beta = LinReg(null_geno, null_pheno)
         beta_null_dist.append(abs(gwas_beta))
     beta_null_dist = np.array(beta_null_dist)
@@ -113,23 +114,9 @@ def caculateSingleP(gts, pts, gt_counts):
     print('Observed beta value is: {}'.format(gwas_beta))
     print("Computing pval by simulated null distribution...")
     print(beta_null_dist)
-    pval = findPval(gwas_beta, beta_null_dist)
-    return pval
+    t_statistic, p_value = ttest_1samp(gwas_beta, beta_null_dist.mean())
+    return t_statistic, p_value
 
-def findPval(observed, null_values):
-    # Calculate the t-statistic and p-value
-    pval = None
-    # your code here
-    total = len(null_values)
-    count = 0
-    # calculate pval by |beta|
-    observed = abs(observed)
-    for beta in null_values:
-        if (beta >= observed):
-            count = count + 1
-
-    pval = count / total
-    return pval
 
 def LinReg(gts, pts):
     X = sm.add_constant(gts)
@@ -142,12 +129,13 @@ def LinReg(gts, pts):
 def calculatePVal(pheno, geno_df):
     pheno_dict = createDictFromPhenotype(pheno)
     # only keep essential info from geno_vcf for t-test 
-    geno_df = geno_df.iloc[:, 3: ].drop(columns=['QUAL','FILTER','INFO','FORMAT'])
+    # geno_df = geno_df.iloc[:, 3: ].drop(columns=['QUAL','FILTER','INFO','FORMAT'])
     geno_val, pheno_val, gt_counts = generateGenoTypeAndPhenotype(pheno_dict, geno_df)
-    p_value = caculateSingleP(geno_val, pheno_val, gt_counts)
+    t_statistic, p_value = caculateSinglePT(geno_val, pheno_val, gt_counts)
     print('p_value for first snp is :')
     print(p_value)
-    return p_value
+    print(t_statistic)
+    return p_value, t_statistic
 
 
 # Not called yet
