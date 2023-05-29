@@ -39,6 +39,9 @@ def read_vcf(path, file_format):
         with gzip.open(path, 'rt') as f:
             for l in f:
                 if (l.startswith('#CHROM')):
+                    l_part1 = l[:5]
+                    l_part2 = l[9:]
+                    l = l_part1 + l_part2
                     lines.append(l)
                 elif (not l.startswith('##') and not l.startswith('#CHROM')):
                     line = l.split('\t')
@@ -53,6 +56,10 @@ def read_vcf(path, file_format):
                     alt_allele = alt_allele.split(',')[0]
                     genotypes = convert_to_genoTypes(ref_allele, alt_allele, queires)
                     info = line[:9] + genotypes
+                    # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
+                    info_pt1 = info[:5]
+                    info_pt2 = info[9:]
+                    info = info_pt1 + info_pt2
                     mod_l = '\t'.join(info)
                     last_char = mod_l[-1]
                     # replace \t at end with \n
@@ -84,8 +91,7 @@ def read_vcf(path, file_format):
     # read the info from vcf file into a pandas dataframe
     return pd.read_csv(
         io.StringIO(''.join(lines)),
-        dtype={'#CHROM': str, 'POS': int, 'ID': str, 'REF': str, 'ALT': str,
-                'QUAL': str, 'FILTER': str, 'INFO': str},
+        dtype={'#CHROM': str, 'POS': int, 'ID': str, 'REF': str, 'ALT': str},
         sep='\t'
     ).rename(columns={'#CHROM': 'CHROM'})
 
@@ -96,7 +102,7 @@ def genoDf(path):
         vcf_df = read_vcf(path, 'gzip')
     else:
         vcf_df = read_vcf(path, 'vcf')
-    vcf_df = vcf_df.drop(columns=['QUAL','FILTER','INFO','FORMAT'])
+        
     vcf_df.to_csv('geno_vcf.csv', index=False)
     
     print('Geno Dafarame is created')
