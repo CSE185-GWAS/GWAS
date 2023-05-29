@@ -95,8 +95,9 @@ def genoDf(path):
         vcf_df = read_vcf(path, 'gzip')
     else:
         vcf_df = read_vcf(path, 'vcf')
-    
+    vcf_df = vcf_df.drop(columns=['QUAL','FILTER','INFO','FORMAT'])
     vcf_df.to_csv('geno_vcf.csv', index=False)
+    
     print('Geno Dafarame is created')
     return vcf_df
     

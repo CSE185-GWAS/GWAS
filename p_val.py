@@ -142,7 +142,6 @@ def LinReg(gts, pts):
 def calculatePVal(pheno, geno_df):
     pheno_dict = createDictFromPhenotype(pheno)
     # only keep essential info from geno_vcf for t-test 
-    geno_df = geno_df.iloc[:, 3: ].drop(columns=['QUAL','FILTER','INFO','FORMAT'])
     geno_val, pheno_val, gt_counts = generateGenoTypeAndPhenotype(pheno_dict, geno_df)
     p_value = caculateSingleP(geno_val, pheno_val, gt_counts)
     print('p_value for first snp is :')
