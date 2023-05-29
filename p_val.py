@@ -116,12 +116,24 @@ def calculateSingleP(gts, pts, gt_counts):
     print('Observed beta value is: {}'.format(gwas_beta))
     print("Computing pval by simulated null distribution...")
     print(beta_null_dist)
-    results = stats.ttest_1samp(pts, null_pheno.mean(),alternative='two-sided')
-    t_statistic, p_value = results.statistic, results.pvalue
-    print(t_statistic)
-    print(p_value)
-    return p_value, gwas_beta, t_statistic
+    pval = findPval(gwas_beta, beta_null_dist)
+    print(pval)
+    return pval, gwas_beta
 
+def findPval(observed, null_values):
+    # Calculate the t-statistic and p-value
+    pval = None
+    # your code here
+    total = len(null_values)
+    count = 0
+    # calculate pval by |beta|
+    observed = abs(observed)
+    for beta in null_values:
+        if (beta >= observed):
+            count = count + 1
+
+    pval = count / total
+    return pval
 
 def LinReg(gts, pts):
     X = sm.add_constant(gts)
@@ -136,14 +148,12 @@ def calculatePVal(pheno, geno_df):
     # geno_df = geno_df.iloc[:, 3: ].drop(columns=['QUAL','FILTER','INFO','FORMAT'])
     p_values = []
     beta_values = []
-    t_stats = []
     for i in range(len(geno_df)):
         geno_val, pheno_val, gt_counts = generateGenotypeAndPhenotype(pheno_dict, geno_df, i)
-        p_value, beta, t_stat = calculateSingleP(geno_val, pheno_val, gt_counts)
+        p_value, beta = calculateSingleP(geno_val, pheno_val, gt_counts)
         p_values.append(p_value)
         beta_values.append(beta)
-        t_stats.append(t_stat)
-    return p_values, beta_values, t_stats
+    return p_values, beta_values
 
 # Not called yet
 def QQPlot(pvals):
