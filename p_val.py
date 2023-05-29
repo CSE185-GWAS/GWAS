@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import scipy.stats as stats
 import pandas as pd
+from qqman import qqman
 
 # this function will return a dictionary where the keys are the sample IDs 
 # and the values are their corresponding phenotype values
@@ -21,9 +22,9 @@ def createDictFromPhenotype(pheno_file, pheno_col=''):
     pheno_df.drop(cols_to_drop, axis=1)
     return dict(pheno_df.values)
 
-# thsi function will return two lists where one will be the genotype values 
+# this function will return two lists where one will be the genotype values 
 # and the other will be their corresponding phenotype values; used to association testing 
-def generateGenoTypeAndPhenotype(pheno_dict, geno_df):
+def generateGenotypeAndPhenotype(pheno_dict, geno_df, snpRow):
     pheno_val = []
     geno_cols = list(geno_df.columns)
 
@@ -32,11 +33,12 @@ def generateGenoTypeAndPhenotype(pheno_dict, geno_df):
             continue
         else:
             pheno_val.append(pheno_dict[geneIds])
-    # for now, only look at first SNP
-    snps = geno_df.iloc[0]
 
-    ref_allele = geno_df['REF'].iloc[0]
-    alt_allele = geno_df['ALT'].iloc[0]
+    # examine SNP at index of snpRow 
+    snps = geno_df.iloc[snpRow]
+
+    ref_allele = geno_df['REF'].iloc[snpRow]
+    alt_allele = geno_df['ALT'].iloc[snpRow]
     genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
 
     geno_val = []
@@ -48,7 +50,6 @@ def generateGenoTypeAndPhenotype(pheno_dict, geno_df):
             gt_counts[genotype] += 1
             
     return geno_val, pheno_val, gt_counts
-
 
 def generateMAF(gt_counts):
     print('Finding minor allele frequencies of current SNP...')
@@ -93,9 +94,8 @@ def generateNullDistribution(maf, N):
 
     return null_geno, null_pheno
 
-
 #input should be a list of beta values, calculate p value
-def caculateSingleP(gts, pts, gt_counts):
+def calculateSingleP(gts, pts, gt_counts):
     size = sum(gt_counts.values())
     maf = generateMAF(gt_counts)
     
@@ -114,7 +114,7 @@ def caculateSingleP(gts, pts, gt_counts):
     print("Computing pval by simulated null distribution...")
     print(beta_null_dist)
     pval = findPval(gwas_beta, beta_null_dist)
-    return pval
+    return pval, gwas_beta
 
 def findPval(observed, null_values):
     # Calculate the t-statistic and p-value
@@ -138,17 +138,18 @@ def LinReg(gts, pts):
     beta = results.params[1]
     return beta
 
-
 def calculatePVal(pheno, geno_df):
     pheno_dict = createDictFromPhenotype(pheno)
     # only keep essential info from geno_vcf for t-test 
-    geno_df = geno_df.iloc[:, 3: ].drop(columns=['QUAL','FILTER','INFO','FORMAT'])
-    geno_val, pheno_val, gt_counts = generateGenoTypeAndPhenotype(pheno_dict, geno_df)
-    p_value = caculateSingleP(geno_val, pheno_val, gt_counts)
-    print('p_value for first snp is :')
-    print(p_value)
-    return p_value
-
+    # geno_df = geno_df.iloc[:, 3: ].drop(columns=['QUAL','FILTER','INFO','FORMAT'])
+    p_values = []
+    beta_values = []
+    for i in range(len(geno_df)):
+        geno_val, pheno_val, gt_counts = generateGenotypeAndPhenotype(pheno_dict, geno_df, i)
+        p_value, beta = calculateSingleP(geno_val, pheno_val, gt_counts)
+        p_values.append(p_value)
+        beta_values.append(beta)
+    return p_values, beta_values
 
 # Not called yet
 def QQPlot(pvals):
@@ -165,13 +166,11 @@ def QQPlot(pvals):
     ax.set_ylim(bottom=0, top=max(-1*np.log10([item for item in pvals if item >0])))
     ax.set_xlabel("Expected -log10(P)")
     ax.set_ylabel("Observed -log10(P)")
+    plt.savefig('qqplot.png')
 
-
-
-
-
-
-
+def manhattanPlot(df):
+    #df needs to have columns 'CHR'(chromosome), 'BP'(basepair), 'P'(p-value)
+    qqman.manhattan(df, out='manhattanplot.png')
 
 
 

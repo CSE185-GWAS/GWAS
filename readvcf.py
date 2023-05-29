@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import p_val as pval
+
 # this will convert list of queries to a genotype list 
 # it will only look at one alt allele
 def convert_to_genoTypes(ref, alt, queries):

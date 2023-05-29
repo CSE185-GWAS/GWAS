@@ -7,14 +7,15 @@ import pandas as pd
 import sys
 import readvcf
 import p_val
+
 def performAnalysis(vcf, phen, graphType=None, graphPath=None):
     if not os.path.isfile(vcf) or not os.path.isfile(phen):
         sys.stderr.write('vcf and phenotype files missing')
         sys.exit(1)
     
-    # generae the genotype df based on vcf file 
+    # generate the genotype df based on vcf file 
     geno_df = readvcf.genoDf(vcf)
-    p_value = p_val.calculatePVal(phen, geno_df)
+    p_value, beta_values = p_val.calculatePVal(phen, geno_df)
 
     
     # TODO: create plots for specified types
@@ -42,5 +43,3 @@ if __name__=='__main__':
     
     args = parser.parse_args()
     performAnalysis(args.vcf, args.phen, args.out, args.graph_type) 
-
-
