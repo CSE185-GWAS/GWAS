@@ -62,18 +62,26 @@ def assign_multi_genoType(ref, alt, queries):
 
 # used to store content & analyze genotype data in vcf file
 # this will return a df with genotype info grabbed from vcf file
-def read_vcf(path, file_format):
+def read_vcf(path, file_format, phen, maf_threhold=0.05):
     lines = []
+    removed_snps = []
+    pheno_dict = pval.createDictFromPhenotype(phen)
+    geno_cols = []
+    result_file = open('out.txt', 'w')
     if (file_format == 'gzip'):  
         with gzip.open(path, 'rt') as f:
             for l in f:
                 if (l.startswith('#CHROM')):
                     # remove useless info from column names (QUAL,FILTER,INFO,FORMAT)
                     l = l.split('\t')
-                    l_part1 = l[:5]
-                    l_part2 = l[9:]
-                    l_list = l_part1 + l_part2
+                    #l_part2 = l[9:]
+                    # keep the geno_cols 
+                    geno_cols = l[9:]
+                    geno_cols[-1] = geno_cols[-1].strip()
+                    l_list = ['CHR', 'BP','SNP','REF','A1','BETA', 'P\n']
                     l = '\t'.join(l_list)
+                    print(l)
+                    result_file.write(l)
                     lines.append(l)
               
                 elif (not l.startswith('##') and not l.startswith('#CHROM')):
@@ -84,10 +92,6 @@ def read_vcf(path, file_format):
                     queires =  line[9:]
                     ref_allele  =  line[3]
                     alt_allele  =  line[4]
-                    # ignore invalid SNP with >1 length ref_allele
-                    if (len(ref_allele) > 1):
-                        print('Invalid SNP, ignore this line')
-                        continue 
 
                     # assign genotypes based on input
                     genotypes, sig_alt_allele = assign_multi_genoType(ref_allele, alt_allele, queires)
@@ -95,45 +99,51 @@ def read_vcf(path, file_format):
                     # reformat alt alelle to most significant alt allele
                     if sig_alt_allele != '':
                         line[4] = sig_alt_allele
-                    # ignore invalid SNP with >1 length alternative allele 
-                    if (len(line[4]) > 1):
-                        print('Invalid SNP, ignore this line')
-                        continue 
+                        alt_allele = sig_alt_allele
+                    
+                    # calculate maf
+                    maf = pval.calculate_maf(ref_allele, alt_allele, genotypes)
+                    if (maf < maf_threhold):
+                        removed_snps.append(line[2])
+                        print('maf is too low, removed from list')
+                        continue
 
-                    info = line[:9] + genotypes
+                    genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
+                    print(genotype_mapping)
+                    obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping, maf)
+                    
+                    info = line[:5] + [str(obs_beta), str(p_value) + '\n']
                     # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
-                    info_pt1 = info[:5]
-                    info_pt2 = info[9:]
-                    info = info_pt1 + info_pt2
+                    #info_pt1 = info[:5]
+                    #info_pt2 = info[9:]
+                    #info = info_pt1 + info_pt2
                     mod_l = '\t'.join(info)
-                    last_char = mod_l[-1]
-                    # replace \t at end with \n
-                    mod_l = mod_l[:-1] + last_char + '\n'
+                    result_file.write(mod_l)
                     lines.append(mod_l)
     else: 
         with open(path, 'r') as f:
             for l in f:
                 if (l.startswith('#CHROM')):
                     # remove useless info from column names (QUAL,FILTER,INFO,FORMAT)
-                    l = l.split(' ')
-                    l_part1 = l[:5]
-                    l_part2 = l[9:]
-                    l_list = l_part1 + l_part2
+                    l = l.split('\t')
+                    #l_part2 = l[9:]
+                    # keep the geno_cols 
+                    geno_cols = l[9:]
+                    geno_cols[-1] = geno_cols[-1].strip()
+                    l_list = ['CHR', 'BP','SNP','REF','A1','BETA', 'P\n']
                     l = '\t'.join(l_list)
+                    print(l)
+                    result_file.write(l)
                     lines.append(l)
               
                 elif (not l.startswith('##') and not l.startswith('#CHROM')):
-                    line = l.split(' ')
+                    line = l.split('\t')
                     # remove \n character for last element 
                     line[-1] = line[-1].strip()
                     # grab queries, ref allele and alt allele
                     queires =  line[9:]
                     ref_allele  =  line[3]
                     alt_allele  =  line[4]
-                    # ignore invalid SNP with >1 length ref_allele
-                    if (len(ref_allele) > 1):
-                        print('Invalid SNP, ignore this line')
-                        continue 
 
                     # assign genotypes based on input
                     genotypes, sig_alt_allele = assign_multi_genoType(ref_allele, alt_allele, queires)
@@ -141,39 +151,46 @@ def read_vcf(path, file_format):
                     # reformat alt alelle to most significant alt allele
                     if sig_alt_allele != '':
                         line[4] = sig_alt_allele
-
-                    if (len(line[4]) > 1):
-                        print('Invalid SNP, ignore this line')
-                        continue 
+                        alt_allele = sig_alt_allele
                     
-                    info = line[:9] + genotypes
+                    # calculate maf
+                    maf = pval.calculate_maf(ref_allele, alt_allele, genotypes)
+                    if (maf < maf_threhold):
+                        removed_snps.append(line[2])
+                        print('maf is too low, removed from list')
+                        continue
+
+                    genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
+                    print(genotype_mapping)
+                    obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping, maf)
+                    
+                    info = line[:5] + [str(obs_beta), str(p_value) + '\n']
                     # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
-                    info_pt1 = info[:5]
-                    info_pt2 = info[9:]
-                    info = info_pt1 + info_pt2
+                    #info_pt1 = info[:5]
+                    #info_pt2 = info[9:]
+                    #info = info_pt1 + info_pt2
                     mod_l = '\t'.join(info)
-                    last_char = mod_l[-1]
-                    # replace \t at end with \n
-                    mod_l = mod_l[:-1] + last_char + '\n'
+                    result_file.write(mod_l)
                     lines.append(mod_l)
     #print(''.join(lines[:10]))
     # read the info from vcf file into a pandas dataframe
+
     return pd.read_csv(
         io.StringIO(''.join(lines)),
-        dtype={'#CHROM': str, 'POS': int, 'ID': str, 'REF': str, 'ALT': str},
+        dtype={'CHR': str, 'BP': int, 'SNP': str, 'REF': str, 'A1': str, 'BETA':float, 'P':float},
         sep='\t'
-    ).rename(columns={'#CHROM': 'CHROM'})
+    ), removed_snps
 
 # this function will read in path of vcf file and convert it 
 # to a df with genotype info, stored as geno.csv
-def genoDf(path):
+def genoDf(path, phen):
     print('Creating Geno Dafarame...')
     if ('gz' in path):
-        vcf_df = read_vcf(path, 'gzip')
+        vcf_df, removed_snps = read_vcf(path, 'gzip', phen)
     else:
-        vcf_df = read_vcf(path, 'vcf')
+        vcf_df, removed_snps = read_vcf(path, 'vcf', phen)
         
-    vcf_df.to_csv('test_multi.csv', index=False)
+    vcf_df.to_csv('out.csv', index=False)
     
     print('Geno Dafarame is created')
     return vcf_df

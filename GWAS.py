@@ -14,15 +14,15 @@ def performAnalysis(vcf, phen, graphType=None, graphPath=None):
         sys.exit(1)
     
     # generate the genotype df based on vcf file if the dataframe is not processed yet 
-    geno_df = readvcf.genoDf(vcf)
+    geno_df = readvcf.genoDf(vcf, phen)
     #geno_df = pd.read_csv(vcf)
-    p_values, beta_values = p_val.calculatePVal(phen, geno_df)
+    #p_values, beta_values = p_val.calculatePVal(phen, geno_df)
     #print(geno_df)
     #print(p_values)
     #print(beta_values)
-    out_df = pd.DataFrame({'CHR': geno_df['CHROM'], 'SNP': geno_df['ID'], 'BP': geno_df['POS'], 
-                           'BETA': beta_values, 'P': p_values})
-    out_df.to_csv('out.txt', sep='\t', index=False)
+    #out_df = pd.DataFrame({'CHR': geno_df['CHROM'], 'SNP': geno_df['ID'], 'BP': geno_df['POS'], 
+    #                       'BETA': beta_values, 'P': p_values})
+    #out_df.to_csv('out.txt', sep='\t', index=False)
     # print(f'{p_value[:10]}')
     # print(f'{beta_values[:10]}')
     

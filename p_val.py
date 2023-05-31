@@ -24,6 +24,7 @@ def createDictFromPhenotype(pheno_file, pheno_col=''):
     pheno_df.drop(cols_to_drop, axis=1)
     return dict(pheno_df.values)
 
+
 # this function will return two lists where one will be the genotype values 
 # and the other will be their corresponding phenotype values; used to association testing 
 def generateGenotypeAndPhenotype(pheno_dict, geno_df, snpRow):
@@ -102,6 +103,20 @@ def generateNullDistribution(maf, N):
     null_pheno = np.random.normal(0, np.sqrt(1), size=len(null_geno))
 
     return null_geno, null_pheno
+
+def createNullGeno(maf, N):
+    # generate null genotypes
+    null_geno = []
+    for i in range(N):
+        gt = int(random.random() < maf)+int(random.random() < maf)
+        null_geno.append(gt)
+    # Normalize geno
+    null_geno = np.array(null_geno)
+    # exclude the case, where there is no need to normalize data because
+    # it is distribution with all values as 0
+    if (np.count_nonzero(null_geno) != 0 and np.var(null_geno) != 0):
+        null_geno = (null_geno-np.mean(null_geno))/np.sqrt(np.var(null_geno))
+    return null_geno
 
 #input should be a list of beta values, calculate p value
 def calculateSingleP(gts, pts, gt_counts, maf_threhold=0.05):
@@ -191,9 +206,44 @@ def manhattanPlot(df):
 
 
 
+def calculate_maf(ref_allele, alt_allele, genotypes):
+    # calculate maf
+    maf = -1
+    ref_allele_freq = 0
+    alt_allele_freq = 0
+    total = 0
+    ref_l = len(ref_allele)
+    alt_l = len(alt_allele)
+    for genotype in genotypes:
+        # skip empty genotypes 
+        if (genotype == 'N'):
+            continue
+        # update total # of alleles
+        total += 2
+        # find index of allele position, check first allele 
+        ref_index = genotype.find(ref_allele)
+        if (ref_index == 0):
+            ref_allele_freq += 1
+            genotype = genotype[ref_l:]
+        else:
+            alt_allele_freq+=1
+            genotype = genotype[alt_l:]
 
+        # check for second allele
+        ref_index = genotype.find(ref_allele)
+        if (ref_index == -1):
+            alt_allele_freq += 1
+        else:
+            ref_allele_freq += 1
+    # if genotype all N, return 0
+    if (total == 0):
+        return 0
+    
+    maf = min(ref_allele_freq/total, alt_allele_freq/total)
+    return maf
 
-#**********Optional TODO: Account for multiple alter allele*******************#
+print(calculate_maf("C","T",["CC","CC","CC","CC","CC","CC","CC","CT","CC","CC","CC","CC","CC","CC",'CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','TC','CC','CC','CC','CC','TC','CC','CC','CC','CC','CC','CC','CC','CC','TC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CT','CC','CC','CC','CC','TC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC','CC',"CC","CC","CC","CC","CC","CC","CC","CC","CC"]))
+#**********Optional TODO: Account for multiple alter allele*******************#'
 def multi_maf(gt_counts):
     gts = gt_counts.keys()
     print("Genotype frequencies:")
@@ -240,3 +290,29 @@ def multi_maf(gt_counts):
                 
         maf = min(fre_1, fre_2)
         return maf
+    
+def getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping, maf):
+    pheno_vars = []
+    geno_vars = []
+    for i in range(len(genotypes)):
+        genotype = genotypes[i]
+        if (genotype == 'N'):
+            continue 
+        else:
+            pheno_vars.append(pheno_dict[geno_cols[i]])
+            geno_vars.append(genotype_mapping[genotype])
+            
+    obs_beta = LinReg(geno_vars, pheno_vars)
+    print("observed beta is: {}".format(obs_beta))
+    N = len(geno_vars)
+    null_geno = createNullGeno(maf, N)
+    null_betas = []
+    for i in range(10000):
+        # generate null phenotypes (normalized
+        null_pheno = np.random.normal(0, np.sqrt(1), size=N)
+        null_beta = LinReg(null_geno, null_pheno)
+        null_betas.append(abs(null_beta))
+    p_value = findPval(obs_beta, null_betas)
+    print("observed pval is: {}".format(p_value))
+
+    return obs_beta, p_value
