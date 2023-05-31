@@ -9,27 +9,56 @@ import numpy as np
 import matplotlib.pyplot as plt
 import p_val as pval
 
-# this will convert list of queries to a genotype list 
-# it will only look at one alt allele
-def convert_to_genoTypes(ref, alt, queries):
+# weird alt allele example: <CN0> CAGC GT very long sequences
+#**Function that will output all genotype, even by >1 alternative allele*****#
+# alt can be multiple separated by ','
+# this will assign genotype to sample based on query 
+def assign_multi_genoType(ref, alt, queries):
     genotypes = []
+    # create dictionary based on input alt
+    alt = alt.split(',')
+    genotype = ''
     dictionary = {
-        "0" : ref,
-        "1" : alt
+        "0" : ref
     }
-
+    
+    alt_allele_counts = []
+    # if there is multi alt allele, map them to dictionary one by one 
+    index = 1
+    for alternative in alt:
+        dictionary[str(index)] = alternative
+        index+=1
+        alt_allele_counts.append(0)
+    # fill in genotypes list based on query 
     for query in queries: 
         genotype = ''
-        num1  = query[0]
-        num2 = query[2]
-        if num1 in dictionary.keys():
-            genotype += dictionary[num1]
-        if num2 in dictionary.keys():
-            genotype += dictionary[num2]
-
+        query = query.split('|')
+        for num in query:
+            if num in dictionary.keys():
+                # if it is a alternaitve allele
+                if (int(num) > 0):
+                    # update its count in gt_allele_counts
+                    alt_allele_counts[int(num)-1] += 1
+                genotype += dictionary[num]
         genotypes.append(genotype)
-    
-    return genotypes
+    # if more than one alt allele exists
+    sig_alt_allele = ''
+    if (len(alt_allele_counts) > 1):
+        # find the significant allele
+        sig_alt_allele = alt_allele_counts.index(max(alt_allele_counts)) + 1
+        sig_alt_allele = dictionary[str(sig_alt_allele)]
+        #print('most significant alternative allele is: {}'.format(sig_alt_allele))
+        # reassign dictionary to only contains most significant alt allele 
+        dictionary = [ref, sig_alt_allele]
+        for i in range(len(genotypes)):
+            geno = genotypes[i]
+            for allele in geno:
+                # if it has minor alleles 
+                if (allele not in dictionary):
+                    # mark it as empty because we will ignore it 
+                    genotypes[i] = 'N' 
+
+    return genotypes, sig_alt_allele
 
 # used to store content & analyze genotype data in vcf file
 # this will return a df with genotype info grabbed from vcf file
@@ -39,10 +68,14 @@ def read_vcf(path, file_format):
         with gzip.open(path, 'rt') as f:
             for l in f:
                 if (l.startswith('#CHROM')):
+                    # remove useless info from column names (QUAL,FILTER,INFO,FORMAT)
+                    l = l.split('\t')
                     l_part1 = l[:5]
                     l_part2 = l[9:]
-                    l = l_part1 + l_part2
+                    l_list = l_part1 + l_part2
+                    l = '\t'.join(l_list)
                     lines.append(l)
+              
                 elif (not l.startswith('##') and not l.startswith('#CHROM')):
                     line = l.split('\t')
                     # remove \n character for last element 
@@ -51,10 +84,22 @@ def read_vcf(path, file_format):
                     queires =  line[9:]
                     ref_allele  =  line[3]
                     alt_allele  =  line[4]
-                    # as it is rare to have multiple allele, 
-                    # only keep first alternative allele for analysis
-                    alt_allele = alt_allele.split(',')[0]
-                    genotypes = convert_to_genoTypes(ref_allele, alt_allele, queires)
+                    # ignore invalid SNP with >1 length ref_allele
+                    if (len(ref_allele) > 1):
+                        print('Invalid SNP, ignore this line')
+                        continue 
+
+                    # assign genotypes based on input
+                    genotypes, sig_alt_allele = assign_multi_genoType(ref_allele, alt_allele, queires)
+                    # if there are multi alt allele exist
+                    # reformat alt alelle to most significant alt allele
+                    if sig_alt_allele != '':
+                        line[4] = sig_alt_allele
+                    # ignore invalid SNP with >1 length alternative allele 
+                    if (len(line[4]) > 1):
+                        print('Invalid SNP, ignore this line')
+                        continue 
+
                     info = line[:9] + genotypes
                     # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
                     info_pt1 = info[:5]
@@ -69,25 +114,49 @@ def read_vcf(path, file_format):
         with open(path, 'r') as f:
             for l in f:
                 if (l.startswith('#CHROM')):
+                    # remove useless info from column names (QUAL,FILTER,INFO,FORMAT)
+                    l = l.split(' ')
+                    l_part1 = l[:5]
+                    l_part2 = l[9:]
+                    l_list = l_part1 + l_part2
+                    l = '\t'.join(l_list)
                     lines.append(l)
+              
                 elif (not l.startswith('##') and not l.startswith('#CHROM')):
-                    line = l.split('\t')
+                    line = l.split(' ')
                     # remove \n character for last element 
                     line[-1] = line[-1].strip()
                     # grab queries, ref allele and alt allele
                     queires =  line[9:]
                     ref_allele  =  line[3]
                     alt_allele  =  line[4]
-                    # as it is rare to have multiple allele, 
-                    # only keep first alternative allele for analysis
-                    alt_allele = alt_allele.split(',')[0]
-                    genotypes = convert_to_genoTypes(ref_allele, alt_allele, queires)
+                    # ignore invalid SNP with >1 length ref_allele
+                    if (len(ref_allele) > 1):
+                        print('Invalid SNP, ignore this line')
+                        continue 
+
+                    # assign genotypes based on input
+                    genotypes, sig_alt_allele = assign_multi_genoType(ref_allele, alt_allele, queires)
+                    # if there are multi alt allele exist
+                    # reformat alt alelle to most significant alt allele
+                    if sig_alt_allele != '':
+                        line[4] = sig_alt_allele
+
+                    if (len(line[4]) > 1):
+                        print('Invalid SNP, ignore this line')
+                        continue 
+                    
                     info = line[:9] + genotypes
+                    # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
+                    info_pt1 = info[:5]
+                    info_pt2 = info[9:]
+                    info = info_pt1 + info_pt2
                     mod_l = '\t'.join(info)
                     last_char = mod_l[-1]
                     # replace \t at end with \n
                     mod_l = mod_l[:-1] + last_char + '\n'
                     lines.append(mod_l)
+    #print(''.join(lines[:10]))
     # read the info from vcf file into a pandas dataframe
     return pd.read_csv(
         io.StringIO(''.join(lines)),
@@ -98,12 +167,13 @@ def read_vcf(path, file_format):
 # this function will read in path of vcf file and convert it 
 # to a df with genotype info, stored as geno.csv
 def genoDf(path):
+    print('Creating Geno Dafarame...')
     if ('gz' in path):
         vcf_df = read_vcf(path, 'gzip')
     else:
         vcf_df = read_vcf(path, 'vcf')
         
-    vcf_df.to_csv('geno_vcf.csv', index=False)
+    vcf_df.to_csv('test_multi.csv', index=False)
     
     print('Geno Dafarame is created')
     return vcf_df
@@ -130,8 +200,11 @@ def testReadVCF():
 def testGenoDF():
     genoDf('lab3_gwas.vcf.gz')
 
+def test_multi_genotype():
+    print(assign_multi_genoType('G', 'A,T,C', ['0|0', '1|0', '0|2', '2|0', '1|2','0|3']))
+
 # test code for assigning genotype by reading from csv file extracted from vcf file
-def analyze_labb3_genotype():
+def analyze_multi_genotype():
     vcf_df = pd.read_csv('out_vcf.csv')
 
     ref_allele = vcf_df['REF']
@@ -153,24 +226,26 @@ def analyze_labb3_genotype():
     vcf_df.to_csv('final_vcf.csv')
 
 
-#**Function that will output all genotype, even by >1 alternative allele*****#
-# alt can be multiple separated by ','
-# this will assign genotype to sample based on query 
-def assign_multi_genoType(ref, alt, query):
-    query = query.split('|')
-    alt = alt.split(',')
-    genotype = ''
-    dictionary = {
-        "0" : ref
-    }
-    index = 1
-    for alternative in alt:
-        dictionary[str(index)] = alternative
-        index+=1
-    
-    for num in query:
-        if num in dictionary.keys():
-            genotype += dictionary[num]
-    
-    return genotype
 
+
+# this will convert list of queries to a genotype list 
+# it will only look at one alt allele
+def convert_to_genoTypes(ref, alt, queries):
+    genotypes = []
+    dictionary = {
+        "0" : ref,
+        "1" : alt
+    }
+
+    for query in queries: 
+        genotype = ''
+        num1  = query[0]
+        num2 = query[2]
+        if num1 in dictionary.keys():
+            genotype += dictionary[num1]
+        if num2 in dictionary.keys():
+            genotype += dictionary[num2]
+
+        genotypes.append(genotype)
+    
+    return genotypes

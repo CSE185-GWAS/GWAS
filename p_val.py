@@ -32,24 +32,24 @@ def generateGenotypeAndPhenotype(pheno_dict, geno_df, snpRow):
     # start from sample columns
     geno_cols = geno_cols[5:]
 
-    for geneIds in geno_cols:
-        pheno_val.append(pheno_dict[geneIds])
-
     # examine SNP at index of snpRow 
     snps = geno_df.iloc[snpRow][5:]
 
     ref_allele = geno_df['REF'].iloc[snpRow]
     alt_allele = geno_df['ALT'].iloc[snpRow]
+    
     genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
     print(genotype_mapping)
 
     geno_val = []
     gt_counts = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 0, alt_allele+ref_allele: 0, alt_allele+alt_allele: 0}
-    for genotype in snps:
-        # omit invalid genotype
+    for i in range(len(snps)):
+        genotype = snps[i]
+        genoID = geno_cols[i]
         if (len(genotype) > 1):
             geno_val.append(genotype_mapping[genotype])
             gt_counts[genotype] += 1
+            pheno_val.append(pheno_dict[genoID])
             
     return geno_val, pheno_val, gt_counts
 
@@ -73,6 +73,10 @@ def generateMAF(gt_counts):
                 allele1_freq = allele1_freq + freq
             else:
                 allele2_freq = allele2_freq + freq
+    # if there is invalid total, return maf as 0
+    if (total == 0):
+        print('maf is 0, invalid inputs')
+        return 0
     allele1_freq = allele1_freq / (total * 2)
     allele2_freq = allele2_freq / (total * 2)
     
@@ -89,7 +93,10 @@ def generateNullDistribution(maf, N):
         null_geno.append(gt)
     # Normalize geno
     null_geno = np.array(null_geno)
-    null_geno = (null_geno-np.mean(null_geno))/np.sqrt(np.var(null_geno))
+    # exclude the case, where there is no need to normalize data because
+    # it is distribution with all values as 0
+    if (np.count_nonzero(null_geno) != 0 and np.var(null_geno) != 0):
+        null_geno = (null_geno-np.mean(null_geno))/np.sqrt(np.var(null_geno))
     
     # generate null phenotypes (normalized)
     null_pheno = np.random.normal(0, np.sqrt(1), size=len(null_geno))
@@ -97,9 +104,14 @@ def generateNullDistribution(maf, N):
     return null_geno, null_pheno
 
 #input should be a list of beta values, calculate p value
-def calculateSingleP(gts, pts, gt_counts):
+def calculateSingleP(gts, pts, gt_counts, maf_threhold=0.05):
     size = sum(gt_counts.values())
     maf = generateMAF(gt_counts)
+    # when maf=1, no change in genotype observed, return 1 as no need to 
+    # conduct simulation
+    if (maf == 1.0 or maf < maf_threhold):
+        print('Observed beta value is: 0')
+        return 1, 0
     
     # Get null list of beta values
     num_tests = 10000
@@ -145,11 +157,12 @@ def LinReg(gts, pts):
 def calculatePVal(pheno, geno_df):
     pheno_dict = createDictFromPhenotype(pheno)
     # only keep essential info from geno_vcf for t-test 
-    # geno_df = geno_df.iloc[:, 3: ].drop(columns=['QUAL','FILTER','INFO','FORMAT'])
     p_values = []
     beta_values = []
     for i in range(len(geno_df)):
+        print(geno_df.iloc[i]['ID'])
         geno_val, pheno_val, gt_counts = generateGenotypeAndPhenotype(pheno_dict, geno_df, i)
+
         p_value, beta = calculateSingleP(geno_val, pheno_val, gt_counts)
         p_values.append(p_value)
         beta_values.append(beta)
