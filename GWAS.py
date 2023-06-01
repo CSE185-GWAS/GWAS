@@ -8,13 +8,13 @@ import sys
 import readvcf
 import p_val
 
-def performAnalysis(vcf, phen, graphType=None, graphPath=None):
+def performAnalysis(vcf, phen, outPath='out.csv', graphType=None):
     if not os.path.isfile(vcf) or not os.path.isfile(phen):
         sys.stderr.write('vcf and phenotype files missing\n')
         sys.exit(1)
     
     # generate the genotype df based on vcf file if the dataframe is not processed yet 
-    geno_df = readvcf.genoDf(vcf, phen)
+    geno_df = readvcf.genoDf(vcf, phen, outPath)
     #geno_df = pd.read_csv(vcf)
     #p_values, beta_values = p_val.calculatePVal(phen, geno_df)
     #print(geno_df)

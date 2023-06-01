@@ -196,14 +196,14 @@ def read_vcf(path, file_format, phen, maf_threhold=0.05):
 
 # this function will read in path of vcf file and convert it 
 # to a df with genotype info, stored as geno.csv
-def genoDf(path, phen):
+def genoDf(path, phen, outPath):
     print('Creating Geno Dafarame...')
     if ('gz' in path):
         vcf_df, removed_snps = read_vcf(path, 'gzip', phen)
     else:
         vcf_df, removed_snps = read_vcf(path, 'vcf', phen)
         
-    vcf_df.to_csv('out.csv', index=False)
+    vcf_df.to_csv(outPath, index=False)
     
     print('Geno Dafarame is created')
     return vcf_df
