@@ -7,14 +7,14 @@ import pandas as pd
 import sys
 import readvcf
 import p_val
-def performAnalysis(vcf, phen, graphType=None, graphPath=None):
+
+def performAnalysis(vcf, phen, outPath='out.csv', graphType=None):
     if not os.path.isfile(vcf) or not os.path.isfile(phen):
-        sys.stderr.write('vcf and phenotype files missing')
+        sys.stderr.write('vcf and phenotype files missing\n')
         sys.exit(1)
     
-    # generae the genotype df based on vcf file 
-    geno_df = readvcf.genoDf(vcf)
-    p_value = p_val.calculatePVal(phen, geno_df)
+    # generate the output df based on vcf file
+    geno_df = readvcf.genoDf(vcf, phen, outPath)
 
     
     # TODO: create plots for specified types
@@ -23,6 +23,7 @@ def performAnalysis(vcf, phen, graphType=None, graphPath=None):
     elif graphType == 'manhattan':
         print()
 
+# return messages based on command line input 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         prog='GWAS-py',
@@ -35,12 +36,10 @@ if __name__=='__main__':
                         metavar='FILE', type=str, required=True)
     parser.add_argument('--maf', help='optional threshold for filtering out SNPs with MAF below this threshold',
                         type=float, required=False)
-    parser.add_argument('-o', '--out', help='optional file to output GWAS graph results; default file name is graph.png if not specified',
+    parser.add_argument('-o', '--out', help='optional file to output GWAS results',
                         metavar='FILE', type=str, required=False)
     parser.add_argument('-g', '--graph_type', help='optional type of graph to save; graph will not be saved otherwise',
                         metavar='FILE', type=str, required=False)
     
     args = parser.parse_args()
     performAnalysis(args.vcf, args.phen, args.out, args.graph_type) 
-
-

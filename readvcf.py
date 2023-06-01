@@ -1,4 +1,4 @@
-# this file can read in vcf or vcf.gzip file, arrange it into a csv file 
+# this file can read in vcf or vcf.gzip file, read in, analyze, and output p-value and beta to output files
 # reference: https://gist.github.com/dceoy/99d976a2c01e7f0ba1c813778f9db744
 
 import gzip 
@@ -8,37 +8,102 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import p_val as pval
-# this will convert list of queries to a genotype list 
-# it will only look at one alt allele
-def convert_to_genoTypes(ref, alt, queries):
-    genotypes = []
-    dictionary = {
-        "0" : ref,
-        "1" : alt
-    }
 
+#**Function that will output all genotype, even by >1 alternative allele*****#
+# alt can be multiple separated by ','
+# this will assign genotype to sample based on query '0|1', '1|2'
+# then it computes most significant alt allele and changed all other genotype
+# with other alt allele to 'N'
+def assign_multi_genoType(ref, alt, queries):
+    genotypes = []
+    # create dictionary based on input alt
+    alt = alt.split(',')
+    genotype = ''
+    dictionary = {
+        "0" : ref
+    }
+    
+    alt_allele_counts = []
+    # if there is multi alt allele, map them to dictionary one by one 
+    index = 1
+    for alternative in alt:
+        dictionary[str(index)] = alternative
+        index+=1
+        alt_allele_counts.append(0)
+    # fill in genotypes list based on query 
     for query in queries: 
         genotype = ''
-        num1  = query[0]
-        num2 = query[2]
-        if num1 in dictionary.keys():
-            genotype += dictionary[num1]
-        if num2 in dictionary.keys():
-            genotype += dictionary[num2]
-
+        if '|' in query:
+            query = query.split('|')
+        elif '/' in query:
+            query = query.split('/')
+        for num in query:
+            if num in dictionary.keys():
+                # if it is a alternaitve allele
+                if (int(num) > 0):
+                    # update its count in gt_allele_counts
+                    alt_allele_counts[int(num)-1] += 1
+                genotype += dictionary[num]
         genotypes.append(genotype)
-    
-    return genotypes
+    # if more than one alt allele exists
+    sig_alt_allele = ''
+    if (len(alt_allele_counts) > 1):
+        # find the significant allele
+        sig_alt_allele = alt_allele_counts.index(max(alt_allele_counts)) + 1
+        sig_alt_allele = dictionary[str(sig_alt_allele)]
+        #print('most significant alternative allele is: {}'.format(sig_alt_allele))
+        # reassign dictionary to only contains most significant alt allele 
+        dictionary = [ref, sig_alt_allele]
+        # print(dictionary)
+        # check genotype with other insignificant alt allele by
+        # checking if it has invalid length
+        maxLen = max(len(ref), len(sig_alt_allele))
+        maxLen *= 2
+        # or checking it has allele nonexistent in updated dictionary 
+        for i in range(len(genotypes)):
+            geno = genotypes[i]
+            if len(geno) > maxLen:
+                genotypes[i] = 'N'
+                continue
+            for allele in geno:
+                # if it has minor alleles 
+                if (allele not in dictionary):
+                    # mark it as empty because we will ignore it 
+                    genotypes[i] = 'N' 
 
-# used to store content & analyze genotype data in vcf file
-# this will return a df with genotype info grabbed from vcf file
-def read_vcf(path, file_format):
+    return genotypes, sig_alt_allele
+
+# used to read in each line of vcf, find genotypes and phenotypes,
+# filter out invalid snp with low maf, and conduct linear regression
+# to find the beta and pvalue, returning output gwas df 
+def read_vcf(path, file_format, phen, maf_threhold=0.05):
+    # record output file lines
     lines = []
+    # used to record removed snps
+    removed_snps = []
+    # map sample id to phenotype value
+    pheno_dict = pval.createDictFromPhenotype(phen)
+    # store sample id that helps to map to phenotype  
+    geno_cols = []
+    result_file = open('out.txt', 'w')
+    # if input fie is zipped, unzipped and analyze it 
     if (file_format == 'gzip'):  
         with gzip.open(path, 'rt') as f:
             for l in f:
+                # when column headers found
                 if (l.startswith('#CHROM')):
+                    # find sample ids 
+                    l = l.split('\t')
+                    # keep the geno_cols 
+                    geno_cols = l[9:]
+                    # remove \n for last sample id
+                    geno_cols[-1] = geno_cols[-1].strip()
+                    # rename column names for output files 
+                    l_list = ['CHR', 'BP','SNP','REF','A1','BETA', 'P\n']
+                    l = '\t'.join(l_list)
+                    result_file.write(l)
                     lines.append(l)
+                # when snp rows are found
                 elif (not l.startswith('##') and not l.startswith('#CHROM')):
                     line = l.split('\t')
                     # remove \n character for last element 
@@ -47,21 +112,49 @@ def read_vcf(path, file_format):
                     queires =  line[9:]
                     ref_allele  =  line[3]
                     alt_allele  =  line[4]
-                    # as it is rare to have multiple allele, 
-                    # only keep first alternative allele for analysis
-                    alt_allele = alt_allele.split(',')[0]
-                    genotypes = convert_to_genoTypes(ref_allele, alt_allele, queires)
-                    info = line[:9] + genotypes
+
+                    # assign genotypes based on input
+                    genotypes, sig_alt_allele = assign_multi_genoType(ref_allele, alt_allele, queires)
+                    # if there are multi alt allele exist
+                    # reformat alt alelle to most significant alt allele
+                    if sig_alt_allele != '':
+                        line[4] = sig_alt_allele
+                        alt_allele = sig_alt_allele
+                    
+                    # calculate maf
+                    maf = pval.calculate_maf(ref_allele, alt_allele, genotypes)
+                    # remove snp if maf is too low 
+                    if (maf < maf_threhold):
+                        removed_snps.append(line[2])
+                        print('maf is too low, removed from list')
+                        continue
+       
+                    print(f'snp {line[2]}')
+                    # print genotype mapping for linear regression
+                    genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
+                    # find beta and pvalue by linear regression 
+                    obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping)
+                    # remove useless info (QUAL, INFO, FILTER, FORMAT)from line, append beta and pval
+                    info = line[:5] + [str(obs_beta), str(p_value) + '\n']
                     mod_l = '\t'.join(info)
-                    last_char = mod_l[-1]
-                    # replace \t at end with \n
-                    mod_l = mod_l[:-1] + last_char + '\n'
+                    # write to output files
+                    result_file.write(mod_l)
                     lines.append(mod_l)
+    # same as above, but directly use file, no step to unzip 
     else: 
         with open(path, 'r') as f:
             for l in f:
                 if (l.startswith('#CHROM')):
+                    # changed column names for output files
+                    l = l.split('\t')
+                    geno_cols = l[9:]
+                    geno_cols[-1] = geno_cols[-1].strip()
+                    l_list = ['CHR', 'BP','SNP','REF','A1','BETA', 'P\n']
+                    l = '\t'.join(l_list)
+                    print(l)
+                    result_file.write(l)
                     lines.append(l)
+              
                 elif (not l.startswith('##') and not l.startswith('#CHROM')):
                     line = l.split('\t')
                     # remove \n character for last element 
@@ -70,33 +163,49 @@ def read_vcf(path, file_format):
                     queires =  line[9:]
                     ref_allele  =  line[3]
                     alt_allele  =  line[4]
-                    # as it is rare to have multiple allele, 
-                    # only keep first alternative allele for analysis
-                    alt_allele = alt_allele.split(',')[0]
-                    genotypes = convert_to_genoTypes(ref_allele, alt_allele, queires)
-                    info = line[:9] + genotypes
+
+                    # assign genotypes based on input
+                    genotypes, sig_alt_allele = assign_multi_genoType(ref_allele, alt_allele, queires)
+                    # if there are multi alt allele exist
+                    # reformat alt alelle to most significant alt allele
+                    if sig_alt_allele != '':
+                        line[4] = sig_alt_allele
+                        alt_allele = sig_alt_allele
+                    
+                    # calculate maf
+                    maf = pval.calculate_maf(ref_allele, alt_allele, genotypes)
+                    if (maf < maf_threhold):
+                        removed_snps.append(line[2])
+                        print('maf is too low, removed from list')
+                        continue
+
+                    print(f'snp {line[2]}')
+                    genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
+                    obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping)
+                    
+                    info = line[:5] + [str(obs_beta), str(p_value) + '\n']
+                    # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
                     mod_l = '\t'.join(info)
-                    last_char = mod_l[-1]
-                    # replace \t at end with \n
-                    mod_l = mod_l[:-1] + last_char + '\n'
+                    result_file.write(mod_l)
                     lines.append(mod_l)
-    # read the info from vcf file into a pandas dataframe
+    # return result as a pandas dataframe 
     return pd.read_csv(
         io.StringIO(''.join(lines)),
-        dtype={'#CHROM': str, 'POS': int, 'ID': str, 'REF': str, 'ALT': str,
-                'QUAL': str, 'FILTER': str, 'INFO': str},
+        dtype={'CHR': str, 'BP': int, 'SNP': str, 'REF': str, 'A1': str, 'BETA':float, 'P':float},
         sep='\t'
-    ).rename(columns={'#CHROM': 'CHROM'})
+    ), removed_snps
 
 # this function will read in path of vcf file and convert it 
-# to a df with genotype info, stored as geno.csv
-def genoDf(path):
+# to a df with gwas linear output 
+def genoDf(path, phen, outPath):
+    print('Creating Geno Dafarame...')
     if ('gz' in path):
-        vcf_df = read_vcf(path, 'gzip')
+        vcf_df, removed_snps = read_vcf(path, 'gzip', phen)
     else:
-        vcf_df = read_vcf(path, 'vcf')
+        vcf_df, removed_snps = read_vcf(path, 'vcf', phen)
+        
+    vcf_df.to_csv(outPath, index=False)
     
-    vcf_df.to_csv('geno_vcf.csv', index=False)
     print('Geno Dafarame is created')
     return vcf_df
     
@@ -122,8 +231,11 @@ def testReadVCF():
 def testGenoDF():
     genoDf('lab3_gwas.vcf.gz')
 
+def test_multi_genotype():
+    print(assign_multi_genoType('G', 'A,T,C', ['0|0', '1|0', '0|2', '2|0', '1|2','0|3']))
+
 # test code for assigning genotype by reading from csv file extracted from vcf file
-def analyze_labb3_genotype():
+def analyze_multi_genotype():
     vcf_df = pd.read_csv('out_vcf.csv')
 
     ref_allele = vcf_df['REF']
@@ -141,28 +253,8 @@ def analyze_labb3_genotype():
         for i in range(size):
             genotype_list.append(assign_multi_genoType(ref_allele[i], alt_allele[i], sample_allele[i]))
         vcf_df[sample] = genotype_list
-    print(vcf_df)
+    # print(vcf_df)
     vcf_df.to_csv('final_vcf.csv')
 
 
-#**Function that will output all genotype, even by >1 alternative allele*****#
-# alt can be multiple separated by ','
-# this will assign genotype to sample based on query 
-def assign_multi_genoType(ref, alt, query):
-    query = query.split('|')
-    alt = alt.split(',')
-    genotype = ''
-    dictionary = {
-        "0" : ref
-    }
-    index = 1
-    for alternative in alt:
-        dictionary[str(index)] = alternative
-        index+=1
-    
-    for num in query:
-        if num in dictionary.keys():
-            genotype += dictionary[num]
-    
-    return genotype
 
