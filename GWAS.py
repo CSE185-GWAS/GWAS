@@ -44,7 +44,7 @@ if __name__=='__main__':
                         metavar='FILE', type=str, required=True)
     parser.add_argument('--maf', help='optional threshold for filtering out SNPs with MAF below this threshold',
                         type=float, required=False)
-    parser.add_argument('-o', '--out', help='optional file to output GWAS graph results; default file name is graph.png if not specified',
+    parser.add_argument('-o', '--out', help='optional file to output GWAS results',
                         metavar='FILE', type=str, required=False)
     parser.add_argument('-g', '--graph_type', help='optional type of graph to save; graph will not be saved otherwise',
                         metavar='FILE', type=str, required=False)

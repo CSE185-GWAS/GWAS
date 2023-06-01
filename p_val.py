@@ -22,7 +22,11 @@ def createDictFromPhenotype(pheno_file, pheno_col=''):
         if col != pheno_col:
             cols_to_drop.append(col)
     pheno_df.drop(cols_to_drop, axis=1)
-    return dict(pheno_df.values)
+    dictionary = dict(pheno_df.values)
+
+    if set(map(type, dictionary)) != {str}:
+        dictionary = {str(int(key)): val for key, val in dictionary.items()}
+    return dictionary
 
 
 # this function will return two lists where one will be the genotype values 
@@ -40,7 +44,6 @@ def generateGenotypeAndPhenotype(pheno_dict, geno_df, snpRow):
     alt_allele = geno_df['ALT'].iloc[snpRow]
     
     genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
-    print(genotype_mapping)
 
     geno_val = []
     gt_counts = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 0, alt_allele+ref_allele: 0, alt_allele+alt_allele: 0}
@@ -166,8 +169,8 @@ def LinReg(gts, pts):
     X = sm.add_constant(gts)
     model = sm.OLS(pts, X)
     results = model.fit()
-    beta = results.params[1]
-    return beta
+    beta, pvalue = results.params[1], results.pvalues[1]
+    return beta, pvalue
 
 def calculatePVal(pheno, geno_df):
     pheno_dict = createDictFromPhenotype(pheno)
@@ -291,7 +294,7 @@ def multi_maf(gt_counts):
         maf = min(fre_1, fre_2)
         return maf
     
-def getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping, maf):
+def getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping):
     pheno_vars = []
     geno_vars = []
     for i in range(len(genotypes)):
@@ -299,20 +302,12 @@ def getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping, maf):
         if (genotype == 'N'):
             continue 
         else:
-            pheno_vars.append(pheno_dict[geno_cols[i]])
-            geno_vars.append(genotype_mapping[genotype])
+            if geno_cols[i] in pheno_dict:
+                pheno_vars.append(pheno_dict[geno_cols[i]])
+                geno_vars.append(genotype_mapping[genotype])
             
-    obs_beta = LinReg(geno_vars, pheno_vars)
+    obs_beta, obs_pval = LinReg(geno_vars, pheno_vars)
     print("observed beta is: {}".format(obs_beta))
-    N = len(geno_vars)
-    null_geno = createNullGeno(maf, N)
-    null_betas = []
-    for i in range(10000):
-        # generate null phenotypes (normalized
-        null_pheno = np.random.normal(0, np.sqrt(1), size=N)
-        null_beta = LinReg(null_geno, null_pheno)
-        null_betas.append(abs(null_beta))
-    p_value = findPval(obs_beta, null_betas)
-    print("observed pval is: {}".format(p_value))
+    print("observed pval is: {}".format(obs_pval))
 
-    return obs_beta, p_value
+    return obs_beta, obs_pval

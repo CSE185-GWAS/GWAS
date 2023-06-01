@@ -32,7 +32,10 @@ def assign_multi_genoType(ref, alt, queries):
     # fill in genotypes list based on query 
     for query in queries: 
         genotype = ''
-        query = query.split('|')
+        if '|' in query:
+            query = query.split('|')
+        elif '/' in query:
+            query = query.split('/')
         for num in query:
             if num in dictionary.keys():
                 # if it is a alternaitve allele
@@ -50,8 +53,14 @@ def assign_multi_genoType(ref, alt, queries):
         #print('most significant alternative allele is: {}'.format(sig_alt_allele))
         # reassign dictionary to only contains most significant alt allele 
         dictionary = [ref, sig_alt_allele]
+        # print(dictionary)
+        maxLen = max(len(ref), len(sig_alt_allele))
+        maxLen *= 2
         for i in range(len(genotypes)):
             geno = genotypes[i]
+            if len(geno) > maxLen:
+                genotypes[i] = 'N'
+                continue
             for allele in geno:
                 # if it has minor alleles 
                 if (allele not in dictionary):
@@ -108,9 +117,11 @@ def read_vcf(path, file_format, phen, maf_threhold=0.05):
                         print('maf is too low, removed from list')
                         continue
 
+                    print(f'snp {line[2]}')
+                    # print(genotypes)
                     genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
-                    print(genotype_mapping)
-                    obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping, maf)
+                    # print(genotype_mapping)
+                    obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping)
                     
                     info = line[:5] + [str(obs_beta), str(p_value) + '\n']
                     # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
@@ -160,9 +171,11 @@ def read_vcf(path, file_format, phen, maf_threhold=0.05):
                         print('maf is too low, removed from list')
                         continue
 
+                    print(f'snp {line[2]}')
+                    # print(genotypes)
                     genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
-                    print(genotype_mapping)
-                    obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping, maf)
+                    # print(genotype_mapping)
+                    obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping)
                     
                     info = line[:5] + [str(obs_beta), str(p_value) + '\n']
                     # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
@@ -239,7 +252,7 @@ def analyze_multi_genotype():
         for i in range(size):
             genotype_list.append(assign_multi_genoType(ref_allele[i], alt_allele[i], sample_allele[i]))
         vcf_df[sample] = genotype_list
-    print(vcf_df)
+    # print(vcf_df)
     vcf_df.to_csv('final_vcf.csv')
 
 
