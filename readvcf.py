@@ -1,4 +1,4 @@
-# this file can read in vcf or vcf.gzip file, arrange it into a csv file 
+# this file can read in vcf or vcf.gzip file, read in, analyze, and output p-value and beta to output files
 # reference: https://gist.github.com/dceoy/99d976a2c01e7f0ba1c813778f9db744
 
 import gzip 
@@ -9,10 +9,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import p_val as pval
 
-# weird alt allele example: <CN0> CAGC GT very long sequences
 #**Function that will output all genotype, even by >1 alternative allele*****#
 # alt can be multiple separated by ','
-# this will assign genotype to sample based on query 
+# this will assign genotype to sample based on query '0|1', '1|2'
+# then it computes most significant alt allele and changed all other genotype
+# with other alt allele to 'N'
 def assign_multi_genoType(ref, alt, queries):
     genotypes = []
     # create dictionary based on input alt
@@ -54,8 +55,11 @@ def assign_multi_genoType(ref, alt, queries):
         # reassign dictionary to only contains most significant alt allele 
         dictionary = [ref, sig_alt_allele]
         # print(dictionary)
+        # check genotype with other insignificant alt allele by
+        # checking if it has invalid length
         maxLen = max(len(ref), len(sig_alt_allele))
         maxLen *= 2
+        # or checking it has allele nonexistent in updated dictionary 
         for i in range(len(genotypes)):
             geno = genotypes[i]
             if len(geno) > maxLen:
@@ -69,30 +73,37 @@ def assign_multi_genoType(ref, alt, queries):
 
     return genotypes, sig_alt_allele
 
-# used to store content & analyze genotype data in vcf file
-# this will return a df with genotype info grabbed from vcf file
+# used to read in each line of vcf, find genotypes and phenotypes,
+# filter out invalid snp with low maf, and conduct linear regression
+# to find the beta and pvalue, returning output gwas df 
 def read_vcf(path, file_format, phen, maf_threhold=0.05):
+    # record output file lines
     lines = []
+    # used to record removed snps
     removed_snps = []
+    # map sample id to phenotype value
     pheno_dict = pval.createDictFromPhenotype(phen)
+    # store sample id that helps to map to phenotype  
     geno_cols = []
     result_file = open('out.txt', 'w')
+    # if input fie is zipped, unzipped and analyze it 
     if (file_format == 'gzip'):  
         with gzip.open(path, 'rt') as f:
             for l in f:
+                # when column headers found
                 if (l.startswith('#CHROM')):
-                    # remove useless info from column names (QUAL,FILTER,INFO,FORMAT)
+                    # find sample ids 
                     l = l.split('\t')
-                    #l_part2 = l[9:]
                     # keep the geno_cols 
                     geno_cols = l[9:]
+                    # remove \n for last sample id
                     geno_cols[-1] = geno_cols[-1].strip()
+                    # rename column names for output files 
                     l_list = ['CHR', 'BP','SNP','REF','A1','BETA', 'P\n']
                     l = '\t'.join(l_list)
-                    print(l)
                     result_file.write(l)
                     lines.append(l)
-              
+                # when snp rows are found
                 elif (not l.startswith('##') and not l.startswith('#CHROM')):
                     line = l.split('\t')
                     # remove \n character for last element 
@@ -112,33 +123,30 @@ def read_vcf(path, file_format, phen, maf_threhold=0.05):
                     
                     # calculate maf
                     maf = pval.calculate_maf(ref_allele, alt_allele, genotypes)
+                    # remove snp if maf is too low 
                     if (maf < maf_threhold):
                         removed_snps.append(line[2])
                         print('maf is too low, removed from list')
                         continue
-
+       
                     print(f'snp {line[2]}')
-                    # print(genotypes)
+                    # print genotype mapping for linear regression
                     genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
-                    # print(genotype_mapping)
+                    # find beta and pvalue by linear regression 
                     obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping)
-                    
+                    # remove useless info (QUAL, INFO, FILTER, FORMAT)from line, append beta and pval
                     info = line[:5] + [str(obs_beta), str(p_value) + '\n']
-                    # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
-                    #info_pt1 = info[:5]
-                    #info_pt2 = info[9:]
-                    #info = info_pt1 + info_pt2
                     mod_l = '\t'.join(info)
+                    # write to output files
                     result_file.write(mod_l)
                     lines.append(mod_l)
+    # same as above, but directly use file, no step to unzip 
     else: 
         with open(path, 'r') as f:
             for l in f:
                 if (l.startswith('#CHROM')):
-                    # remove useless info from column names (QUAL,FILTER,INFO,FORMAT)
+                    # changed column names for output files
                     l = l.split('\t')
-                    #l_part2 = l[9:]
-                    # keep the geno_cols 
                     geno_cols = l[9:]
                     geno_cols[-1] = geno_cols[-1].strip()
                     l_list = ['CHR', 'BP','SNP','REF','A1','BETA', 'P\n']
@@ -172,22 +180,15 @@ def read_vcf(path, file_format, phen, maf_threhold=0.05):
                         continue
 
                     print(f'snp {line[2]}')
-                    # print(genotypes)
                     genotype_mapping = {ref_allele+ref_allele: 0, ref_allele+alt_allele: 1, alt_allele+ref_allele: 1, alt_allele+alt_allele: 2}
-                    # print(genotype_mapping)
                     obs_beta, p_value = pval.getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping)
                     
                     info = line[:5] + [str(obs_beta), str(p_value) + '\n']
                     # remove useless info (QUAL, INFO, FILTER, FORMAT)from line 
-                    #info_pt1 = info[:5]
-                    #info_pt2 = info[9:]
-                    #info = info_pt1 + info_pt2
                     mod_l = '\t'.join(info)
                     result_file.write(mod_l)
                     lines.append(mod_l)
-    #print(''.join(lines[:10]))
-    # read the info from vcf file into a pandas dataframe
-
+    # return result as a pandas dataframe 
     return pd.read_csv(
         io.StringIO(''.join(lines)),
         dtype={'CHR': str, 'BP': int, 'SNP': str, 'REF': str, 'A1': str, 'BETA':float, 'P':float},
@@ -195,7 +196,7 @@ def read_vcf(path, file_format, phen, maf_threhold=0.05):
     ), removed_snps
 
 # this function will read in path of vcf file and convert it 
-# to a df with genotype info, stored as geno.csv
+# to a df with gwas linear output 
 def genoDf(path, phen, outPath):
     print('Creating Geno Dafarame...')
     if ('gz' in path):
@@ -257,25 +258,3 @@ def analyze_multi_genotype():
 
 
 
-
-# this will convert list of queries to a genotype list 
-# it will only look at one alt allele
-def convert_to_genoTypes(ref, alt, queries):
-    genotypes = []
-    dictionary = {
-        "0" : ref,
-        "1" : alt
-    }
-
-    for query in queries: 
-        genotype = ''
-        num1  = query[0]
-        num2 = query[2]
-        if num1 in dictionary.keys():
-            genotype += dictionary[num1]
-        if num2 in dictionary.keys():
-            genotype += dictionary[num2]
-
-        genotypes.append(genotype)
-    
-    return genotypes
