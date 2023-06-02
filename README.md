@@ -4,7 +4,7 @@ Our GWAS Tool can read in a VCF file, a phenotype file (in csv format), performi
 association studies by linear regression and outputting a csv file of GWAS results. Optionally,
 users can pass in arguments to choose the type of plots (e.g. qq plot) would like to generate as
 a .png file. The tool is be implemented in Python and hosted on Github that you can clone the repository and run
-the associated script through the command-line argument, specifically:
+the associated script through the command-line argument (when you're in our GWAS tool folder you cloned), specifically:
 
 ```
 git clone https://github.com/CSE185-GWAS/GWAS.git # clone script to your local computer  
