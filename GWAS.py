@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import argparse
 import matplotlib.pyplot as plt
 import os.path
@@ -8,20 +7,27 @@ import sys
 import readvcf
 import p_val
 
-def performAnalysis(vcf, phen, outPath='out.csv', graphType=None):
+def performAnalysis(vcf, phen, outPath='out.csv', graphType='Both'):
     if not os.path.isfile(vcf) or not os.path.isfile(phen):
         sys.stderr.write('vcf and phenotype files missing\n')
         sys.exit(1)
     
     # generate the output df based on vcf file
-    geno_df = readvcf.genoDf(vcf, phen, outPath)
-
+    readvcf.genoDf(vcf, phen, outPath)
+    geno_df = pd.read_csv(outPath)
     
     # TODO: create plots for specified types
     if graphType == 'qq':
-        print()
+        p_val.QQPlot(geno_df['P'].tolist())
+
     elif graphType == 'manhattan':
-        print()
+        p_val.manhattanPlot(geno_df)
+
+    # if no input, print both graph by default
+    else:
+        p_val.QQPlot(geno_df['P'].tolist())
+        p_val.manhattanPlot(geno_df)
+
 
 # return messages based on command line input 
 if __name__=='__main__':

@@ -193,20 +193,20 @@ def read_vcf(path, file_format, phen, maf_threhold=0.05):
         io.StringIO(''.join(lines)),
         dtype={'CHR': str, 'BP': int, 'SNP': str, 'REF': str, 'A1': str, 'BETA':float, 'P':float},
         sep='\t'
-    ), removed_snps
+    )
 
 # this function will read in path of vcf file and convert it 
 # to a df with gwas linear output 
 def genoDf(path, phen, outPath):
     print('Creating Geno Dafarame...')
     if ('gz' in path):
-        vcf_df, removed_snps = read_vcf(path, 'gzip', phen)
+        vcf_df = read_vcf(path, 'gzip', phen)
     else:
-        vcf_df, removed_snps = read_vcf(path, 'vcf', phen)
+        vcf_df = read_vcf(path, 'vcf', phen)
         
     vcf_df.to_csv(outPath, index=False)
     
-    print('Geno Dafarame is created')
+    print('Analysis complete, please check output file for details')
     return vcf_df
     
 # uncomment below to test this out using lab3 data
