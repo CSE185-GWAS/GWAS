@@ -8,7 +8,54 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import p_val as pval
-
+# this function destruct geno and return if it needs to be deleted for containing minor alleles 
+def destructGeno(geno, allowed_alle, minor_alleles):
+    for i in range(2):
+        # find allowed allele in geno
+        ref_pos = geno.find(allowed_alle[0])
+        alt_pos = geno.find(allowed_alle[1])
+    
+        # if none of allowed geno found, return deleted = TRUE
+        comp_len = 0                     
+        if (ref_pos != 0 and alt_pos != 0):
+            return True
+        # if both refers to first position, use the longer one 
+        elif(ref_pos == 0 and alt_pos == 0):
+            comp_len = max(len(allowed_alle[0]), len(allowed_alle[1]))
+            # but if using larger length make it = 0
+            if ((i == 0 and geno[comp_len:] == '')):
+                comp_len = min(len(allowed_alle[0]), len(allowed_alle[1]))
+        # otherwise, record its length to compare with potential minor allele 
+        elif(ref_pos == 0):
+            comp_len = len(allowed_alle[0])
+        else:
+            comp_len = len(allowed_alle[1])
+    
+        # store minor alleles position
+        minor_pos = []
+        for minor in minor_alleles:
+            minor_pos.append(geno.find(minor))
+           
+        minor_alt = ''
+        for j in range(len(minor_pos)):
+            # once we recognize other minor allele existence
+            if (minor_pos[j] == 0):
+                minor_alt = minor_alleles[j]
+   
+        # if there is a minor allele start at pos 0, and length higher than ref/alt alllele start at pos 0
+        # geno contains minor allele that needs to be removed
+        if len(minor_alt) > comp_len:
+            # when checking for first allele, make sure using minor alt does not use up all nucleotide
+            if ((i == 0 and geno[len(minor_alt):] != '')):
+                return True
+            
+            # when it's second allele, it is definitely the minor alt so return 1
+            if (i == 1 and geno[len(minor_alt):] == ''):
+                return True 
+        # update geno
+        geno = geno[comp_len:]
+    return False  
+    
 #**Function that will output all genotype, even by >1 alternative allele*****#
 # alt can be multiple separated by ','
 # this will assign genotype to sample based on query '0|1', '1|2'
@@ -45,6 +92,7 @@ def assign_multi_genoType(ref, alt, queries):
                     alt_allele_counts[int(num)-1] += 1
                 genotype += dictionary[num]
         genotypes.append(genotype)
+    
     # if more than one alt allele exists
     sig_alt_allele = ''
     if (len(alt_allele_counts) > 1):
@@ -53,24 +101,29 @@ def assign_multi_genoType(ref, alt, queries):
         sig_alt_allele = dictionary[str(sig_alt_allele)]
         #print('most significant alternative allele is: {}'.format(sig_alt_allele))
         # reassign dictionary to only contains most significant alt allele 
+        minor_allele = list(dictionary.values())
+        minor_allele.remove(ref)
+        minor_allele.remove(sig_alt_allele)
+
         dictionary = [ref, sig_alt_allele]
-        # print(dictionary)
         # check genotype with other insignificant alt allele by
         # checking if it has invalid length
         maxLen = max(len(ref), len(sig_alt_allele))
         maxLen *= 2
+        minLen = min(len(ref), len(sig_alt_allele))
+        minLen *= 2
         # or checking it has allele nonexistent in updated dictionary 
         for i in range(len(genotypes)):
             geno = genotypes[i]
-            if len(geno) > maxLen:
+            # check for invalid length genos
+            if len(geno) > maxLen or len(geno) < minLen:
                 genotypes[i] = 'N'
                 continue
-            for allele in geno:
-                # if it has minor alleles 
-                if (allele not in dictionary):
-                    # mark it as empty because we will ignore it 
-                    genotypes[i] = 'N' 
-
+            # check for invalid allele 
+            if destructGeno(geno, dictionary, minor_allele):
+                genotypes[i] = 'N' 
+                continue 
+          
     return genotypes, sig_alt_allele
 
 # used to read in each line of vcf, find genotypes and phenotypes,
@@ -193,20 +246,20 @@ def read_vcf(path, file_format, phen, maf_threhold=0.05):
         io.StringIO(''.join(lines)),
         dtype={'CHR': str, 'BP': int, 'SNP': str, 'REF': str, 'A1': str, 'BETA':float, 'P':float},
         sep='\t'
-    ), removed_snps
+    )
 
 # this function will read in path of vcf file and convert it 
 # to a df with gwas linear output 
 def genoDf(path, phen, outPath):
     print('Creating Geno Dafarame...')
     if ('gz' in path):
-        vcf_df, removed_snps = read_vcf(path, 'gzip', phen)
+        vcf_df = read_vcf(path, 'gzip', phen)
     else:
-        vcf_df, removed_snps = read_vcf(path, 'vcf', phen)
+        vcf_df = read_vcf(path, 'vcf', phen)
         
     vcf_df.to_csv(outPath, index=False)
     
-    print('Geno Dafarame is created')
+    print('Analysis complete, please check output file for details')
     return vcf_df
     
 # uncomment below to test this out using lab3 data
