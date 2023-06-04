@@ -1,6 +1,5 @@
 # this file 
 # reference: lab 3  
-import math
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
@@ -24,25 +23,26 @@ def calculate_maf(ref_allele, alt_allele, genotypes):
             continue
         # update total # of alleles by 2
         total += 2
-        # find index of allele position, check first allele position 
-        ref_index = genotype.find(ref_allele)
-        # if first allele is ref allele, split it using ref_l 
-        if (ref_index == 0):
-            ref_allele_freq += 1
-            genotype = genotype[ref_l:]
-        # otherwise, split it using alt_l
-        else:
-            alt_allele_freq+=1
-            genotype = genotype[alt_l:]
+        for i in range(2): 
+            # find index of allele position, check first allele position 
+            ref_index = genotype.find(ref_allele)
+            alt_index = genotype.find(alt_allele)
+            if (ref_index == 0 and alt_index == 0):
+                if (ref_l > alt_l):
+                    ref_allele_freq += 1
+                    genotype = genotype[ref_l:]
+                else:
+                    alt_allele_freq+=1
+                    genotype = genotype[alt_l:]
+            elif(ref_index == 0):
+            # if first allele is ref allele, split it using ref_l 
+                ref_allele_freq += 1
+                genotype = genotype[ref_l:]
+            # otherwise, split it using alt_l
+            else:
+                alt_allele_freq+=1
+                genotype = genotype[alt_l:]
 
-        # check for second allele
-        ref_index = genotype.find(ref_allele)
-        # if it's not ref allele, update alt allele 
-        if (ref_index == -1):
-            alt_allele_freq += 1
-        # otherwise, update ref alelle count 
-        else:
-            ref_allele_freq += 1
     # if genotype all N, return 0
     if (total == 0):
         return 0
@@ -100,8 +100,7 @@ def getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping):
     return obs_beta, obs_pval
 
 # Not called yet
-def QQPlot(df):
-    pvals = df['P'].tolist()
+def QQPlot(pvals):
     pvals.sort()
     unif = list(np.random.uniform(0, 1, size=len(pvals)))
     unif.sort()
@@ -110,16 +109,14 @@ def QQPlot(df):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.scatter(-1*np.log10(unif), -1*np.log10(pvals), s=5, color="black")
-    largestX = math.ceil(max(-1*np.log10([item for item in unif if item > 0])))
-    largestY = math.ceil(max(-1*np.log10([item for item in pvals if item > 0])))
-    smallerDimension = min(largestX, largestY)
-    ax.plot([0, smallerDimension], [0, smallerDimension])
-    ax.set_xlim(left=0, right=largestX)
-    ax.set_ylim(bottom=0, top=largestY)
+    ax.plot([0, 3], [0,3])
+    ax.set_xlim(left=0, right=3)
+    ax.set_ylim(bottom=0, top=max(-1*np.log10([item for item in pvals if item >0])))
     ax.set_xlabel("Expected -log10(P)")
     ax.set_ylabel("Observed -log10(P)")
     plt.savefig('qqplot.png')
 
 def manhattanPlot(df):
+    #df needs to have columns 'CHR'(chromosome), 'BP'(basepair), 'P'(p-value)
     qqman.manhattan(df, out='manhattanplot.png')
 
