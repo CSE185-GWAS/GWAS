@@ -8,7 +8,7 @@ import sys
 import readvcf
 import p_val
 
-def performAnalysis(vcf, phen, outPath='out.csv', graphType=None):
+def performAnalysis(vcf, phen, outPath='out.csv', willOutputQQ=False, willOutputManhattan=False):
     if not os.path.isfile(vcf) or not os.path.isfile(phen):
         sys.stderr.write('vcf and phenotype files missing\n')
         sys.exit(1)
@@ -26,11 +26,11 @@ def performAnalysis(vcf, phen, outPath='out.csv', graphType=None):
     # print(f'{p_value[:10]}')
     # print(f'{beta_values[:10]}')
     
-    # TODO: create plots for specified types
-    if graphType == 'qq':
-        print()
-    elif graphType == 'manhattan':
-        print()
+    df = pd.read_csv(outPath)
+    if willOutputQQ:
+        p_val.QQPlot(df)
+    if willOutputManhattan:
+        p_val.manhattanPlot(df)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
@@ -46,8 +46,8 @@ if __name__=='__main__':
                         type=float, required=False)
     parser.add_argument('-o', '--out', help='optional file to output GWAS results',
                         metavar='FILE', type=str, required=False)
-    parser.add_argument('-g', '--graph_type', help='optional type of graph to save; graph will not be saved otherwise',
-                        metavar='FILE', type=str, required=False)
+    parser.add_argument('-q', '--qq', help='optional qqman plot saved as "qqplot.png"', required=False, action='store_true')
+    parser.add_argument('-m', '--manhattan', help='optional manhattan plot saved as "manhattanplot.png"', action='store_true', required=False)
     
     args = parser.parse_args()
-    performAnalysis(args.vcf, args.phen, args.out, args.graph_type) 
+    performAnalysis(args.vcf, args.phen, args.out, args.qq, args.manhattan) 

@@ -187,7 +187,8 @@ def calculatePVal(pheno, geno_df):
     return p_values, beta_values
 
 # Not called yet
-def QQPlot(pvals):
+def QQPlot(df):
+    pvals = df['P'].tolist()
     pvals.sort()
     unif = list(np.random.uniform(0, 1, size=len(pvals)))
     unif.sort()
@@ -204,10 +205,7 @@ def QQPlot(pvals):
     plt.savefig('qqplot.png')
 
 def manhattanPlot(df):
-    #df needs to have columns 'CHR'(chromosome), 'BP'(basepair), 'P'(p-value)
     qqman.manhattan(df, out='manhattanplot.png')
-
-
 
 def calculate_maf(ref_allele, alt_allele, genotypes):
     # calculate maf
