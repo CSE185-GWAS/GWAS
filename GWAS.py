@@ -13,18 +13,9 @@ def performAnalysis(vcf, phen, outPath='out.csv', willOutputQQ=False, willOutput
         sys.stderr.write('vcf and phenotype files missing\n')
         sys.exit(1)
     
-    # generate the genotype df based on vcf file if the dataframe is not processed yet 
+    # generate the output df based on vcf file
     geno_df = readvcf.genoDf(vcf, phen, outPath)
-    #geno_df = pd.read_csv(vcf)
-    #p_values, beta_values = p_val.calculatePVal(phen, geno_df)
-    #print(geno_df)
-    #print(p_values)
-    #print(beta_values)
-    #out_df = pd.DataFrame({'CHR': geno_df['CHROM'], 'SNP': geno_df['ID'], 'BP': geno_df['POS'], 
-    #                       'BETA': beta_values, 'P': p_values})
-    #out_df.to_csv('out.txt', sep='\t', index=False)
-    # print(f'{p_value[:10]}')
-    # print(f'{beta_values[:10]}')
+
     
     df = pd.read_csv(outPath)
     if willOutputQQ:
@@ -32,6 +23,7 @@ def performAnalysis(vcf, phen, outPath='out.csv', willOutputQQ=False, willOutput
     if willOutputManhattan:
         p_val.manhattanPlot(df)
 
+# return messages based on command line input 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
         prog='GWAS-py',
