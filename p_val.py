@@ -1,5 +1,6 @@
 # this file 
 # reference: lab 3  
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
@@ -109,9 +110,12 @@ def QQPlot(df):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.scatter(-1*np.log10(unif), -1*np.log10(pvals), s=5, color="black")
-    ax.plot([0, 3], [0,3])
-    ax.set_xlim(left=0, right=3)
-    ax.set_ylim(bottom=0, top=max(-1*np.log10([item for item in pvals if item >0])))
+    largestX = math.ceil(max(-1*np.log10([item for item in unif if item > 0])))
+    largestY = math.ceil(max(-1*np.log10([item for item in pvals if item > 0])))
+    smallerDimension = min(largestX, largestY)
+    ax.plot([0, smallerDimension], [0, smallerDimension])
+    ax.set_xlim(left=0, right=largestX)
+    ax.set_ylim(bottom=0, top=largestY)
     ax.set_xlabel("Expected -log10(P)")
     ax.set_ylabel("Observed -log10(P)")
     plt.savefig('qqplot.png')
