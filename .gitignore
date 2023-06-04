@@ -2,7 +2,6 @@ doi_10.5061_dryad.2rs41__v1/
 __pycache__/
 # ignore test input files and output files 
 *geno_vcf.csv
-*.vcf.gz
 *.vcf.gz.tbi
 *.phen
 studysession
