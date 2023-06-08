@@ -1,5 +1,5 @@
 # GWAS-py: Performing and Graphing GWAS
-### Tool Description:
+## Tool Description:
 Our GWAS Tool can read in a VCF file, a phenotype file (in csv format), performing genome-wide
 association studies by linear regression and outputting a csv file of GWAS results. Optionally,
 users can pass in arguments to choose the type of plots (e.g. qq plot) would like to generate as
@@ -8,7 +8,7 @@ a .png file.
 It is a python package hosted on Github that you can clone the repository and run
 the associated script through the command-line argument (when you're in our GWAS tool folder you cloned). 
 
-### Download & Set up Environment 
+## Download & Set up Environment 
 ```
 git clone https://github.com/CSE185-GWAS/GWAS.git # clone our tool to your local computer 
 cd GWAS # go to our tools folder 
@@ -49,8 +49,7 @@ Essentially, just replace our package name with main script. A simple use case w
 ```python GWAS/GWAS.py --vcf testcases/test.vcf --phen benchmark/lab3_phen.csv -o testcases/test.csv -q -m ```
 
 
-### Tool Usage: 
-
+## Tool Usage: 
 ```GWAS-py --vcf <input_file> --phen <phenotype_file> –o <output_file_name> -m -q  ```
 
 ### Required input tags 
