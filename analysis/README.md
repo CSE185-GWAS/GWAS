@@ -9,3 +9,5 @@ This directory also contains files for comparing output from GWAS and plink
 * compare_result.ipynb
 
 Please change input files paths at first two cells to compare results as you own need. The script will compare two output files' p value column, beta value column, and their snp column from GWAS linear analysis. 
+
+We also include unit test to the some functions from read_vcf at the end of file. Feel free to take a look over it and test with different inputs too. 
