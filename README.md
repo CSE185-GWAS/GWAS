@@ -40,13 +40,34 @@ pip install qqman
 
 ### If you are download the package by instruction, but it is showing *GWAS-py command not found*?
 Our apology that we have not figure out why it happens for some of our users. We are still working on it and would update instruction once we understand the issue better. 
-Alternatively, please directly use our main script as below:
+If command is not found, please follow the steps below to run our tool: 
 
-```python GWAS/GWAS.py --vcf <input_file> --phen <phenotype_file> –o <output_file_name> -m -q  ```
+You can find where our gwas-py tool is downloaded in the console message when you run ```python setup.py install --prefix=$HOME ```.
 
-Essentially, just replace our package name with main script. A simple use case would be: 
+You will see something like: 
+```
+Installing GWAS-py script to /Users/apple/bin # this will vary based on your username on computer, it's abosulte path to package
 
-```python GWAS/GWAS.py --vcf testcases/test.vcf --phen benchmark/lab3_phen.csv -o testcases/test.csv -q -m ```
+Installed /Users/apple/lib/python3.9/site-packages/GWAS_py-0.0.1-py3.9.egg
+Processing dependencies for GWAS-py==0.0.1
+Finished processing dependencies for GWAS-py==0.0.1
+```
+
+Based on the absolute path you find, you can use our tool by:
+
+```/path/to/bin/GWAS-py --vcf <input_file> --phen <phenotype_file> –o <output_file_name> -m -q  ```
+
+where you replace the /path/to/bin/ with the path printed in following message. 
+
+For example: 
+
+```/Users/apple/bin/GWAS-py --vcf <input_file> --phen <phenotype_file> –o <output_file_name> -m -q  ```
+
+A simple use case would be: 
+
+```/Users/apple/bin/GWAS-py --vcf testcases/test.vcf --phen benchmark/lab3_phen.csv -o testcases/test.csv -q -m ```
+
+For following steps, replace ```GWAS-py``` with ```/path/to/bin/GWAS-py```.
 
 
 ## Tool Usage: 
