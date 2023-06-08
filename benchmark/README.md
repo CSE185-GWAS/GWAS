@@ -29,6 +29,6 @@ GWAS-py --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly
 ```
 Running with PLINK:
 ```
-PLINK --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen pheno/Palmer_Lab_Pheno_Test.tsv —maf 0.05 -o out2.txt
+plink --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen pheno/Palmer_Lab_Pheno_Test.tsv —maf 0.05 -o out2.txt
 ```
 Same as above, output files are generated in this directory.
