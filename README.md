@@ -115,7 +115,7 @@ You can also use
   ./tests/run_on_example_files.sh
 ```
 
-to test a medium-size dataset. We put the output csv file in the tests/ directory so you can take a look over it before proceeding. 
+to test a medium-size dataset ```./example-files/chr10.recode.vcf.gz```. We put the output csv file in the tests/ directory so you can take a look over it before proceeding. 
 
 ### Benchmark:
 We benchmark our tool by applying our tool to the subset of 1000 Genome Project data
