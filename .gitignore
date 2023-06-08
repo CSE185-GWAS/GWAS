@@ -3,7 +3,6 @@ __pycache__/
 # ignore test input files and output files 
 *geno_vcf.csv
 *.vcf.gz.tbi
-*.phen
 studysession
 geno.csv
 test_multi.csv
