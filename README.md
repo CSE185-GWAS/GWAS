@@ -132,3 +132,18 @@ GWAS-py --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly
 We also put the output in the ```palmer_dataset.csv```. 
 
 If you want to run plink on this dataset, please use ```benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf``` as well as ```pheno/Palmer_Lab_Pheno_Test.tsv``` and filter them with a maf of 0.05. 
+
+
+## Attributes:
+Creator: Cathy(Weiwen) Dong, Jenelle Truong, and Jiayi Chen
+
+## Dataset References:
+CSE 185 Lab 3 Dataset on Datahub
+Palmer lab dataset:
+https://github.com/agileta/SD_PavCA_GWAS
+https://palmerlab.org/protocols-data/
+
+## Code References:
+https://github.com/gymreklab/cse185-demo-project/blob/main/setup.py
+https://gist.github.com/dceoy/99d976a2c01e7f0ba1c813778f9db744
+CSE 185 Lab 3 Exercises
