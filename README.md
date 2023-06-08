@@ -16,7 +16,7 @@ pip install pandas # set up package environment, you can also refers to requirem
 pip install matplotlib
 pip install statsmodels
 pip install qqman
-python setup.py install --prefix=$HOME # set up our package 
+python setup.py install # set up our package 
 pwd # this will return the absolute path to our tool on local computer
 # For Linux / mac users, replace /path/to/your/project/ with what pwd command returns above 
 export PYTHONPATH="${PYTHONPATH}:/path/to/your/project/"
