@@ -139,11 +139,15 @@ Creator: Cathy(Weiwen) Dong, Jenelle Truong, and Jiayi Chen
 
 ## Dataset References:
 CSE 185 Lab 3 Dataset on Datahub
+
 Palmer lab dataset:
+
 https://github.com/agileta/SD_PavCA_GWAS
 https://palmerlab.org/protocols-data/
 
 ## Code References:
 https://github.com/gymreklab/cse185-demo-project/blob/main/setup.py
+
 https://gist.github.com/dceoy/99d976a2c01e7f0ba1c813778f9db744
+
 CSE 185 Lab 3 Exercises
