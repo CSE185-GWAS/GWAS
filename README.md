@@ -127,5 +127,6 @@ when you're in our GWAS folder. You can also find results for the qqplot and mar
 To test our tool with other dataset, type 
   
 ```
-GWAS-py --vcf benchmark/lab3_gwas.vcf.gz --phen benchmark/lab3_phen.csv -o lab3_results.csv -m -q 
+GWAS-py --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen benchmark/palmer_dataset_phen.csv -o palmer_daraset.csv -m -q
 ```
+We also put the output in the ```palmer_dataset.csv```. If you want to run plink on this dataset too, please use ```benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf``` as well as ```pheno/```
