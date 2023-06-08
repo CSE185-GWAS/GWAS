@@ -1,4 +1,4 @@
-# The GWAS Graph Tool: Performing and Graphing GWAS
+# GWAS-py: Performing and Graphing GWAS
 ### Tool Description:
 Our GWAS Tool can read in a VCF file, a phenotype file (in csv format), performing genome-wide
 association studies by linear regression and outputting a csv file of GWAS results. Optionally,
