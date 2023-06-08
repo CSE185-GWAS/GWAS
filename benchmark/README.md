@@ -12,7 +12,7 @@ GWAS-py --vcf benchmark/lab3_gwas.vcf.gz --phen benchmark/lab3_phen.csv -o lab3_
 ```
 Generate output from PLINK:
 ```
-PLINK —-linear --vcf lab3_gwas.vcf.gz --phen lab3_gwas.phen –maf 0.05 -o lab3_gwas.assoc.linear
+plink --linear --vcf lab3_gwas.vcf.gz --pheno lab3_gwas.phen --maf 0.05  --out lab3_gwas --allow-no-sex 
 ```
 The plots and output files are generated in this directory.
 
@@ -25,10 +25,10 @@ Run our tool on Palmer Lab data. From the Palmer Lab website, we got SNP data an
 
 Again, run this command to generate results:
 ```
-GWAS-py --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen benchmark/palmer_dataset_phen.csv -o out2.txt -m -q
+GWAS-py --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf.gz --phen benchmark/palmer_dataset_phen.csv -o out2.csv -m -q
 ```
 Running with PLINK:
 ```
-plink --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen pheno/Palmer_Lab_Pheno_Test.tsv —maf 0.05 -o out2.txt
+plink --linear --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf.gz --pheno pheno/Palmer_Lab.phen  --maf 0.05 --out Palmer_Lab --allow-no-sex
 ```
 Same as above, output files are generated in this directory.
