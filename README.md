@@ -151,8 +151,9 @@ GWAS-py --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly
 ```
 We also put the output in the ```benchmark/palmer_dataset.csv```. 
 
-If you want to run plink on this dataset, please use ```benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf.gz``` as well as ```pheno/Palmer_Lab_Pheno_Test.tsv``` and filter them with a maf of 0.05. 
+If you want to run plink on this dataset, please use ```benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf.gz``` as well as ```Palmer_Lab.phen``` and filter them with a maf of 0.05. 
 
+The phenotype file for testing with plink can be downloaded here: 
 
 ## Contributor:
 Cathy(Weiwen) Dong, Jenelle Truong, and Jiayi Chen
