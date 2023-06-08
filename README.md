@@ -151,9 +151,21 @@ GWAS-py --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly
 ```
 We also put the output in the ```benchmark/palmer_dataset.csv```. 
 
-If you want to run plink on this dataset, please use ```benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf.gz``` as well as ```Palmer_Lab.phen``` and filter them with a maf of 0.05. 
 
-The phenotype file for testing with plink can be downloaded here: 
+### Plink Comparison: 
+If you want to find plink results on lab3 dataset, please go back to datahub in lab3_spring directory and find corresponding files from lab3. We also have phenotype file for plink available at ```benchmark/lab3_gwas.vcf.gz``` and ```pheno/lab3_gwas.phen```.
+
+A example plink command would look like:
+```
+plink --linear --vcf lab3_gwas.vcf.gz --pheno lab3_gwas.phen --maf 0.05  --out lab3_gwas --allow-no-sex 
+```
+
+If you want to run plink on the test dataset, please download from our  ```benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf.gz``` as well as ```pheno/Palmer_Lab.phen``` and filter them with a maf of 0.05. 
+
+A example plink command would look like:
+```
+plink --linear --vcf allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf.gz --pheno Palmer_Lab.phen  --maf 0.05 --out Palmer_Lab --allow-no-sex
+```
 
 ## Contributor:
 Cathy(Weiwen) Dong, Jenelle Truong, and Jiayi Chen
