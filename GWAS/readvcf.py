@@ -7,7 +7,8 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import p_val as pval
+from . import p_val as pval
+
 # this function destruct geno and return if it needs to be deleted for containing minor alleles 
 def destructGeno(geno, allowed_alle, minor_alleles):
     for i in range(2):

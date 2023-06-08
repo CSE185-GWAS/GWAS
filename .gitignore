@@ -13,3 +13,6 @@ settings.json
 out.txt
 nohup.out 
 .DS_Store
+build
+dist
+GWAS_py.egg-info
