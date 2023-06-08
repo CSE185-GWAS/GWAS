@@ -25,10 +25,10 @@ Run our tool on Palmer Lab data. From the Palmer Lab website, we got SNP data an
 
 Again, run this command to generate results:
 ```
-GWAS-py --vcf allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen benchmark/palmer_dataset_phen.csv -o out2.txt -m -q
+GWAS-py --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen benchmark/palmer_dataset_phen.csv -o out2.txt -m -q
 ```
 Running with PLINK:
 ```
-PLINK --vcf allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen Palmer_Lab_Pheno_Test.tsv —maf 0.05 -o out2.txt
+PLINK --vcf benchmark/allChr.allSamps.90DR2.maf01.hweE7.noIBD.CharlesRiverOnly.vcf --phen pheno/Palmer_Lab_Pheno_Test.tsv —maf 0.05 -o out2.txt
 ```
 Same as above, output files are generated in this directory.
