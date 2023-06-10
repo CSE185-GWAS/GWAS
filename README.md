@@ -17,7 +17,9 @@ pip install matplotlib
 pip install statsmodels
 pip install qqman
 python setup.py install # set up our package 
+
 pwd # this will return the absolute path to our tool on local computer
+
 # For Linux / mac users, replace /path/to/your/project/ with what pwd command returns above 
 export PYTHONPATH="${PYTHONPATH}:/path/to/your/project/"
 
@@ -31,7 +33,8 @@ below:
 ```
 python3 -m venv studysession
 source /Users/apple/Desktop/GWAS/studysession/bin/activate #this will vary depend on directory that you download our tool 
-# download all required python modules  
+
+# now you can download all required python modules! Refer back to steps above to set up our package   
 pip install pandas
 pip install matplotlib
 pip install statsmodels
@@ -106,7 +109,7 @@ A simple use case of our tool with small dataset you can test would be:
 ```
 GWAS-py --vcf testcases/test.vcf --phen benchmark/lab3_phen.csv -o testcases/test.csv -q -m
 ```
-We store the example output files in the README in testcases. Feel free to take a look over it.
+We store the example output files in the testcases/ directory. Feel free to take a look over it before you run the command. 
 
 ### Test scripts: 
 You can also use 
