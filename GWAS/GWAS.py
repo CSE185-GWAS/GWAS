@@ -7,7 +7,7 @@ import pandas as pd
 import sys
 from . import p_val 
 from . import readvcf
-
+# parse argument from command line, and call function to execute the analysis 
 def main():
     parser = argparse.ArgumentParser(
         prog='GWAS-py',
@@ -31,7 +31,7 @@ def main():
         args.maf = 0.05
     performAnalysis(args.vcf, args.phen, args.maf, args.out, args.qq, args.manhattan) 
 
-
+# perform GWAS based on input and print error message if input file is invalid 
 def performAnalysis(vcf, phen, maf=0.05, outPath='out.csv', willOutputQQ=False, willOutputManhattan=False):
     if not os.path.isfile(vcf) or not os.path.isfile(phen):
         sys.stderr.write('vcf and phenotype files missing\n')
@@ -40,7 +40,7 @@ def performAnalysis(vcf, phen, maf=0.05, outPath='out.csv', willOutputQQ=False, 
     # generate the output df based on vcf file
     geno_df = readvcf.genoDf(vcf, phen, outPath, maf)
 
-    
+    # convert result file into dataframe for plottings 
     df = pd.read_csv(outPath)
     if willOutputQQ:
         p_val.QQPlot(df)
