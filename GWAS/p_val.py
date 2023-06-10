@@ -99,7 +99,7 @@ def getSingleP(genotypes, pheno_dict, geno_cols, genotype_mapping):
     print("observed pval is: {}".format(obs_pval))
 
     return obs_beta, obs_pval
-
+# function to plot qq plot based on result df 
 def QQPlot(df):
     pvals = df['P'].tolist()
     pvals.sort()
@@ -119,7 +119,7 @@ def QQPlot(df):
     ax.set_xlabel("Expected -log10(P)")
     ax.set_ylabel("Observed -log10(P)")
     plt.savefig('qqplot.png')
-
+# function to plot manhattan plot based on result df 
 def manhattanPlot(df):
     #df needs to have columns 'CHR'(chromosome), 'BP'(basepair), 'P'(p-value)
     qqman.manhattan(df, out='manhattanplot.png')
