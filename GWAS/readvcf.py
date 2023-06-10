@@ -262,9 +262,6 @@ def genoDf(path, phen, outPath, maf=0.05):
     
     print('Analysis complete, please check output file for details')
     return vcf_df
-    
-# uncomment below to test this out using lab3 data
-#genoDf('lab3_gwas.vcf.gz')
 
 
 
