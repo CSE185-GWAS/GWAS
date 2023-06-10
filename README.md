@@ -42,7 +42,7 @@ pip install qqman
 Our apology that we have not figure out why it happens for some of our users. We are still working on it and would update instruction once we understand the issue better. 
 If command is not found, please follow the steps below to run our tool: 
 
-You can find where our gwas-py tool is downloaded in the console message when you run ```python setup.py install --prefix=$HOME ```.
+You can find where our gwas-py tool is downloaded in the console message when you run ```python setup.py install```.
 
 You will see something like: 
 ```
