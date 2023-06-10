@@ -1,4 +1,4 @@
-# this file 
+# this file include statistical script for compute maf, assign genotype, and conduct linear regressions 
 # reference: lab 3  
 import math 
 import numpy as np
