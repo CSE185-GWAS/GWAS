@@ -81,7 +81,7 @@ For following steps, replace ```GWAS-py``` with ```/path/to/bin/GWAS-py```.
 ```--vcf <input_file>``` : used to mark **path to the input vcf file** that contains information about SNP and genotype information of samples. (ex. input.vcf.gz / input.vcf)
 
 ```--phen <phenotype_file>``` or ```-p <phenotype_file>```: used to mark the **path to the phenotype csv file** (ex. lab3_phen.csv)
-*The phenotype file should have rows as sample ID and columns as phenotype name (ex. LDL)*
+*The phenotype file should have rows as sample ID and columns as phenotype name (ex. LDL). It will analyze first column of phenotype. *
 
 ***need help with preprocess phenotype file?***
 
