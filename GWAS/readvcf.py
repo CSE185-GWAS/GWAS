@@ -288,27 +288,4 @@ def testGenoDF():
 def test_multi_genotype():
     print(assign_multi_genoType('G', 'A,T,C', ['0|0', '1|0', '0|2', '2|0', '1|2','0|3']))
 
-# test code for assigning genotype by reading from csv file extracted from vcf file
-def analyze_multi_genotype():
-    vcf_df = pd.read_csv('out_vcf.csv')
-
-    ref_allele = vcf_df['REF']
-    alt_allele = vcf_df['ALT']
-    
-    size = vcf_df.shape[0]
-    # sample names
-    column_name = vcf_df.columns
-    # base on vcf format, extract 12th column till the end for sample names
-    sample_name = column_name[10:]
-
-    for sample in sample_name: 
-        genotype_list = []
-        sample_allele = vcf_df[sample]
-        for i in range(size):
-            genotype_list.append(assign_multi_genoType(ref_allele[i], alt_allele[i], sample_allele[i]))
-        vcf_df[sample] = genotype_list
-    # print(vcf_df)
-    vcf_df.to_csv('final_vcf.csv')
-
-
 
